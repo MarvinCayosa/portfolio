@@ -63,7 +63,7 @@ export function Hero() {
           </FadeIn>
 
           <FadeIn delay={0.14}>
-            <p className="mt-5 max-w-xl font-body text-base leading-relaxed text-[var(--muted)] sm:text-lg">
+            <p className="mt-5 max-w-xl font-body text-sm leading-relaxed text-[var(--muted)] sm:text-base">
               {HERO_COPY.bioLead}
               <span className="font-semibold text-[var(--foreground)]">
                 {HERO_COPY.bioRole}
@@ -74,7 +74,7 @@ export function Hero() {
               </span>
               {HERO_COPY.bioBody}
             </p>
-            <p className="mt-3 max-w-xl font-body text-base font-medium text-[var(--foreground)] sm:text-lg">
+            <p className="mt-3 max-w-xl font-body text-sm font-medium text-[var(--foreground)] sm:text-base">
               {HERO_COPY.bioClosing}
             </p>
           </FadeIn>

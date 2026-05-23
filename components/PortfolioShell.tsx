@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { useReducedEffects } from "@/hooks/useReducedEffects";
+import { PortfolioReadyContext } from "@/hooks/usePortfolioReady";
 import { AnimatePresence } from "framer-motion";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ResumeFab } from "@/components/layout/ResumeFab";
@@ -23,9 +24,8 @@ import { Contact } from "@/components/sections/Contact";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 import type { PortfolioPageData } from "@/types";
 
-/** Text animation holds until 3s; 0.5s wipe exit completes at 3.5s. */
+/** Text holds until 3s; 0.5s fade exit completes at 3.5s, then section animations run. */
 const LOADING_EXIT_AT_MS = 3000;
-const LOADING_TOTAL_MS = 3500;
 
 interface PortfolioShellProps extends PortfolioPageData {}
 
@@ -36,51 +36,51 @@ export function PortfolioShell({
   awards,
 }: PortfolioShellProps) {
   const [showLoader, setShowLoader] = useState(true);
-  const [pageInteractive, setPageInteractive] = useState(false);
+  const [pageReady, setPageReady] = useState(false);
   const reducedEffects = useReducedEffects();
 
   useEffect(() => {
     const exitTimer = setTimeout(() => setShowLoader(false), LOADING_EXIT_AT_MS);
-    const unlockTimer = setTimeout(() => setPageInteractive(true), LOADING_TOTAL_MS);
-    return () => {
-      clearTimeout(exitTimer);
-      clearTimeout(unlockTimer);
-    };
+    return () => clearTimeout(exitTimer);
   }, []);
 
+  const onLoaderExitComplete = () => {
+    setPageReady(true);
+  };
+
   return (
-    <>
-      <div className={pageInteractive ? undefined : "pointer-events-none"}>
-      <TooltipProvider>
-        <TopChrome />
-        <PageWrapper>
-          <Hero />
-          <Skills />
-          <Experience experiences={experiences} />
-          <Projects projects={projects} />
-          <Education />
-          <Awards awards={awards} />
-          <Contact />
-        </PageWrapper>
-        <GradualBlur
-          target="page"
-          position="bottom"
-          height={reducedEffects ? "7rem" : "11rem"}
-          strength={reducedEffects ? 2.5 : 3.25}
-          lite
-          curve="bezier"
-          exponential
-          opacity={1}
-          zIndex={40}
-        />
-        <ResumeFab />
-        <BottomNav />
-      </TooltipProvider>
+    <PortfolioReadyContext.Provider value={pageReady}>
+      <div className={pageReady ? undefined : "pointer-events-none"}>
+        <TooltipProvider>
+          <TopChrome />
+          <PageWrapper>
+            <Hero />
+            <Skills />
+            <Experience experiences={experiences} />
+            <Projects projects={projects} />
+            <Education />
+            <Awards awards={awards} />
+            <Contact />
+          </PageWrapper>
+          <GradualBlur
+            target="page"
+            position="bottom"
+            height={reducedEffects ? "7rem" : "11rem"}
+            strength={reducedEffects ? 2.5 : 3.25}
+            lite
+            curve="bezier"
+            exponential
+            opacity={1}
+            zIndex={40}
+          />
+          <ResumeFab />
+          <BottomNav />
+        </TooltipProvider>
       </div>
 
-      <AnimatePresence>
+      <AnimatePresence onExitComplete={onLoaderExitComplete}>
         {showLoader && <LoadingScreen key="loading" />}
       </AnimatePresence>
-    </>
+    </PortfolioReadyContext.Provider>
   );
 }

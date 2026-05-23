@@ -108,10 +108,11 @@ export function SkillStack({ categories }: { categories: SkillCategory[] }) {
 
   return (
     <div className="mt-8">
-      <nav
-        className="no-scrollbar -mx-1 flex flex-wrap justify-center gap-2 px-1 pb-4 sm:justify-start"
-        aria-label="Expertise categories"
-      >
+      <div className="-mx-5 sm:mx-0">
+        <nav
+          className="no-scrollbar flex flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-5 pb-4 [-webkit-overflow-scrolling:touch] sm:flex-wrap sm:justify-start sm:overflow-visible sm:px-0"
+          aria-label="Expertise categories"
+        >
         <button
           type="button"
           onClick={() => setActiveCategory(null)}
@@ -146,7 +147,8 @@ export function SkillStack({ categories }: { categories: SkillCategory[] }) {
             </button>
           );
         })}
-      </nav>
+        </nav>
+      </div>
 
       <div className="columns-2 gap-3 sm:columns-3 lg:columns-4 xl:columns-5">
         {pills.map((pill) => {

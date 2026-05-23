@@ -56,17 +56,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  if (!mounted) {
-    return (
-      <div className="min-h-dvh bg-[#050505]" suppressHydrationWarning>
-        {children}
-      </div>
-    );
-  }
-
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
-      {children}
+      {!mounted ? (
+        <div className="min-h-dvh bg-[#050505]" suppressHydrationWarning>
+          {children}
+        </div>
+      ) : (
+        children
+      )}
     </ThemeContext.Provider>
   );
 }
