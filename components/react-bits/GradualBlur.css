@@ -1,0 +1,23 @@
+.gradual-blur-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.gradual-blur-inner > div {
+  -webkit-backdrop-filter: inherit;
+  backdrop-filter: inherit;
+}
+
+.gradual-blur {
+  isolation: isolate;
+  contain: layout style paint;
+  transform: translateZ(0);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .gradual-blur-inner > div {
+    background: var(--gradual-blur-fallback, rgba(0, 0, 0, 0.25));
+    opacity: 0.5;
+  }
+}
