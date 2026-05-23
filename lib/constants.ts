@@ -76,7 +76,7 @@ export const HERO_STATS = [
   { label: "Graduation", value: "2026" },
   { label: "Honors", value: "Magna" },
   { label: "Focus", value: "Cloud" },
-  { label: "Domains", value: "Data · Embedded" },
+  { label: "Domains", value: "Cloud · Data Analytics" },
 ] as const;
 
 export const SOCIAL_LINKS: SocialLink[] = [
@@ -109,7 +109,7 @@ export const SOCIAL_LINKS: SocialLink[] = [
 export const SECTION_TITLES = {
   skills: "Expertise",
   experience: "Experience",
-  projects: "Selected Work",
+  projects: "Projects",
   education: "Education",
   awards: "Recognition",
   contact: "Get in Touch",
@@ -201,8 +201,8 @@ export const FOOTER_COPY = {
 };
 
 export const LOADING_COPY = {
-  initials: SITE_NAME.slice(0, 2).toUpperCase(),
-  name: SITE_NAME,
+  initials: "MC",
+  role: "Computer Engineer",
 };
 
 export const AI_SYSTEM_PROMPT = `You are an assistant for ${SITE_NAME}'s portfolio website.

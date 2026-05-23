@@ -1,5 +1,5 @@
 /**
- * ProjectShowcase — CircularGallery + detail modal (scalable via project-catalog).
+ * ProjectShowcase — borderless gallery with side fades; click only on gallery.
  */
 
 "use client";
@@ -14,7 +14,12 @@ import { ProjectDetailModal } from "@/components/projects/ProjectDetailModal";
 const CircularGallery = dynamic(
   () =>
     import("@/components/react-bits/CircularGallery").then((m) => m.CircularGallery),
-  { ssr: false, loading: () => <div className="h-[420px] animate-pulse rounded-2xl bg-[var(--surface)]" /> },
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[min(44vh,400px)] min-h-[260px] w-full animate-pulse bg-transparent sm:min-h-[300px] lg:min-h-[340px]" />
+    ),
+  },
 );
 
 interface ProjectShowcaseProps {
@@ -39,20 +44,33 @@ export function ProjectShowcase({ projects }: ProjectShowcaseProps) {
   };
 
   return (
-    <>
-      <p className="mb-3 font-label text-[var(--muted)]">
+    <div className="flex w-full flex-col items-center">
+      <p className="mt-4 w-full text-center font-label text-[var(--muted)]">
         Auto-rotating gallery — hover to pause, click a card for details
       </p>
-      <div className="h-[min(52vh,520px)] min-h-[320px] w-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
-        <CircularGallery
-          items={galleryItems}
-          bend={3}
-          textColor="#f2f0eb"
-          borderRadius={0.06}
-          scrollEase={0.04}
-          autoPlay
-          autoPlaySpeed={0.022}
-          onSelect={openProject}
+
+      <div className="relative mt-4 w-full max-w-[min(100vw,96rem)] px-0 sm:mt-6">
+        <div className="h-[min(44vh,400px)] min-h-[260px] w-full overflow-hidden sm:h-[min(52vh,500px)] sm:min-h-[300px] lg:h-[min(58vh,560px)] lg:min-h-[340px]">
+          <CircularGallery
+            items={galleryItems}
+            bend={2}
+            textColor="#f2f0eb"
+            borderRadius={0.06}
+            scrollEase={0.035}
+            scrollSpeed={1.6}
+            autoPlay
+            autoPlaySpeed={0.02}
+            onSelect={openProject}
+          />
+        </div>
+
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-[var(--background)] via-[var(--background)]/80 to-transparent sm:w-16"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[var(--background)] via-[var(--background)]/80 to-transparent sm:w-16"
+          aria-hidden
         />
       </div>
 
@@ -61,6 +79,6 @@ export function ProjectShowcase({ projects }: ProjectShowcaseProps) {
         open={modalOpen}
         onOpenChange={setModalOpen}
       />
-    </>
+    </div>
   );
 }

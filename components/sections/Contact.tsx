@@ -84,26 +84,26 @@ export function Contact() {
           </p>
         </FadeIn>
 
-        <ul className="mt-6 grid gap-2 sm:grid-cols-3">
+        <ul className="mt-6 grid gap-2 sm:grid-cols-3 sm:items-stretch">
           {CONTACT_COPY.paths.map((path, i) => {
             const Icon = pathIcons[path.id as keyof typeof pathIcons] ?? MessageCircle;
             const mailto = `mailto:${CONTACT_COPY.directEmail}?subject=${encodeURIComponent(path.mailSubject)}`;
 
             return (
-              <FadeIn key={path.id} delay={i * 0.04}>
-                <BorderGlow {...glow} borderRadius={12}>
+              <FadeIn key={path.id} delay={i * 0.04} className="h-full">
+                <BorderGlow {...glow} borderRadius={12} className="h-full">
                   <a
                     href={mailto}
-                    className="flex flex-col gap-2 p-3.5 transition-transform hover:-translate-y-0.5 sm:p-4"
+                    className="flex h-full min-h-[9.75rem] flex-col gap-2 p-3.5 transition-transform hover:-translate-y-0.5 sm:min-h-[11rem] sm:p-4"
                   >
-                    <Icon className="h-4 w-4 text-[var(--muted)]" aria-hidden />
+                    <Icon className="h-4 w-4 shrink-0 text-[var(--muted)]" aria-hidden />
                     <h3 className="font-display text-base text-[var(--foreground)]">
                       {path.title}
                     </h3>
-                    <p className="line-clamp-2 font-body text-xs leading-snug text-[var(--muted)]">
+                    <p className="line-clamp-2 flex-1 font-body text-xs leading-snug text-[var(--muted)]">
                       {path.description}
                     </p>
-                    <span className="font-label mt-1 text-[0.6rem] text-[var(--foreground)]">
+                    <span className="font-label mt-auto text-[0.6rem] text-[var(--foreground)]">
                       {path.cta} →
                     </span>
                   </a>

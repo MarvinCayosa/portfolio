@@ -112,11 +112,13 @@ export function Hero() {
           </FadeIn>
 
           <FadeIn delay={0.28}>
-            <dl className="mt-12 grid grid-cols-2 gap-6 border-t border-[var(--border)] pt-8 sm:mt-16 sm:grid-cols-4 sm:gap-8 sm:pt-10">
+            <dl className="mt-10 grid grid-cols-2 gap-4 border-t border-[var(--border)] pt-6 sm:mt-12 sm:grid-cols-4 sm:gap-5 sm:pt-8">
               {HERO_STATS.map((stat) => (
                 <div key={stat.label}>
-                  <dt className="font-label text-[var(--muted)]">{stat.label}</dt>
-                  <dd className="stat-value mt-2 text-[var(--foreground)]">
+                  <dt className="font-label text-[0.55rem] text-[var(--muted)]">
+                    {stat.label}
+                  </dt>
+                  <dd className="mt-1 font-body text-sm font-medium text-[var(--foreground)] sm:text-base">
                     {stat.value}
                   </dd>
                 </div>

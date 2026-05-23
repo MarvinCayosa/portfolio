@@ -17,7 +17,7 @@ export function Skills() {
           {SECTION_TITLES.skills}
         </h2>
         <p className="prose-muted mt-2 max-w-2xl text-sm">
-          Tap a domain to explore technologies and tools.
+          Select a category to highlight related skills, or browse all pills below.
         </p>
       </FadeIn>
       <SkillStack categories={SKILL_CATEGORIES} />

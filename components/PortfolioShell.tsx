@@ -23,7 +23,9 @@ import { Contact } from "@/components/sections/Contact";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 import type { PortfolioPageData } from "@/types";
 
-const MIN_LOADING_MS = 700;
+/** Text animation holds until 3s; 0.5s wipe exit completes at 3.5s. */
+const LOADING_EXIT_AT_MS = 3000;
+const LOADING_TOTAL_MS = 3500;
 
 interface PortfolioShellProps extends PortfolioPageData {}
 
@@ -33,47 +35,52 @@ export function PortfolioShell({
   education: _education,
   awards,
 }: PortfolioShellProps) {
-  const [loading, setLoading] = useState(true);
+  const [showLoader, setShowLoader] = useState(true);
+  const [pageInteractive, setPageInteractive] = useState(false);
   const reducedEffects = useReducedEffects();
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), MIN_LOADING_MS);
-    return () => clearTimeout(timer);
+    const exitTimer = setTimeout(() => setShowLoader(false), LOADING_EXIT_AT_MS);
+    const unlockTimer = setTimeout(() => setPageInteractive(true), LOADING_TOTAL_MS);
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(unlockTimer);
+    };
   }, []);
 
   return (
     <>
-      <AnimatePresence mode="wait">
-        {loading && <LoadingScreen key="loading" />}
-      </AnimatePresence>
+      <div className={pageInteractive ? undefined : "pointer-events-none"}>
+      <TooltipProvider>
+        <TopChrome />
+        <PageWrapper>
+          <Hero />
+          <Skills />
+          <Experience experiences={experiences} />
+          <Projects projects={projects} />
+          <Education />
+          <Awards awards={awards} />
+          <Contact />
+        </PageWrapper>
+        <GradualBlur
+          target="page"
+          position="bottom"
+          height={reducedEffects ? "7rem" : "11rem"}
+          strength={reducedEffects ? 2.5 : 3.25}
+          lite
+          curve="bezier"
+          exponential
+          opacity={1}
+          zIndex={40}
+        />
+        <ResumeFab />
+        <BottomNav />
+      </TooltipProvider>
+      </div>
 
-      {!loading && (
-        <TooltipProvider>
-          <TopChrome />
-          <PageWrapper>
-            <Hero />
-            <Skills />
-            <Experience experiences={experiences} />
-            <Projects projects={projects} />
-            <Education />
-            <Awards awards={awards} />
-            <Contact />
-          </PageWrapper>
-          <GradualBlur
-            target="page"
-            position="bottom"
-            height={reducedEffects ? "7rem" : "11rem"}
-            strength={reducedEffects ? 2.5 : 3.25}
-            lite
-            curve="bezier"
-            exponential
-            opacity={1}
-            zIndex={40}
-          />
-          <ResumeFab />
-          <BottomNav />
-        </TooltipProvider>
-      )}
+      <AnimatePresence>
+        {showLoader && <LoadingScreen key="loading" />}
+      </AnimatePresence>
     </>
   );
 }

@@ -43,6 +43,47 @@ function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
+type GalleryLayout = {
+  cardWidth: number;
+  cardHeight: number;
+  padding: number;
+  bend: number;
+};
+
+/** Responsive card size, gap, and arc from container width. */
+function getGalleryLayout(screenWidth: number, baseBend: number): GalleryLayout {
+  if (screenWidth < 480) {
+    return {
+      cardWidth: 400,
+      cardHeight: 520,
+      padding: 3.4,
+      bend: baseBend * 0.42,
+    };
+  }
+  if (screenWidth < 768) {
+    return {
+      cardWidth: 500,
+      cardHeight: 640,
+      padding: 3.0,
+      bend: baseBend * 0.58,
+    };
+  }
+  if (screenWidth < 1024) {
+    return {
+      cardWidth: 620,
+      cardHeight: 820,
+      padding: 2.5,
+      bend: baseBend * 0.78,
+    };
+  }
+  return {
+    cardWidth: 760,
+    cardHeight: 1020,
+    padding: 2.2,
+    bend: baseBend,
+  };
+}
+
 function autoBind(instance: object) {
   const proto = Object.getPrototypeOf(instance);
   Object.getOwnPropertyNames(proto).forEach((key) => {
@@ -176,6 +217,7 @@ class Media {
   width = 0;
   widthTotal = 0;
   x = 0;
+  baseBend = 2.25;
 
   constructor(opts: {
     geometry: Plane;
@@ -240,10 +282,13 @@ class Media {
             vUv.x * ratio.x + (1.0 - ratio.x) * 0.5,
             vUv.y * ratio.y + (1.0 - ratio.y) * 0.5
           );
+          vec3 placeholder = vec3(0.14, 0.14, 0.15);
           vec4 color = texture2D(tMap, uv);
+          float lum = max(max(color.r, color.g), color.b);
+          vec3 rgb = mix(placeholder, color.rgb, clamp(lum * 1.2 + 0.25, 0.4, 1.0));
           float d = roundedBoxSDF(vUv - 0.5, vec2(0.5 - uBorderRadius), uBorderRadius);
           float alpha = 1.0 - smoothstep(-0.002, 0.002, d);
-          gl_FragColor = vec4(color.rgb, alpha);
+          gl_FragColor = vec4(rgb, alpha);
         }
       `,
       uniforms: {
@@ -293,14 +338,24 @@ class Media {
     } else {
       const B_abs = Math.abs(this.bend);
       const R = (H * H + B_abs * B_abs) / (2 * B_abs);
-      const effectiveX = Math.min(Math.abs(x), H);
-      const arc = R - Math.sqrt(R * R - effectiveX * effectiveX);
+      const absX = Math.abs(x);
+      const effectiveX = Math.min(absX, H);
+      let arc = R - Math.sqrt(R * R - effectiveX * effectiveX);
+
+      // Extend arc smoothly past viewport edge so recycled cards don't snap upward.
+      if (absX > H) {
+        const edgeArc = R - Math.sqrt(R * R - H * H);
+        const denom = Math.sqrt(Math.max(R * R - H * H, 0.0001));
+        const slope = H / denom;
+        arc = edgeArc + (absX - H) * slope * 0.85;
+      }
+
       if (this.bend > 0) {
         this.plane.position.y = -arc;
-        this.plane.rotation.z = -Math.sign(x) * Math.asin(effectiveX / R);
+        this.plane.rotation.z = -Math.sign(x) * Math.asin(Math.min(effectiveX / R, 1));
       } else {
         this.plane.position.y = arc;
-        this.plane.rotation.z = Math.sign(x) * Math.asin(effectiveX / R);
+        this.plane.rotation.z = Math.sign(x) * Math.asin(Math.min(effectiveX / R, 1));
       }
     }
 
@@ -318,14 +373,24 @@ class Media {
     }
   }
 
-  onResize(opts: { screen?: { width: number; height: number }; viewport?: { width: number; height: number } } = {}) {
+  onResize(opts: {
+    screen?: { width: number; height: number };
+    viewport?: { width: number; height: number };
+    baseBend?: number;
+  } = {}) {
     if (opts.screen) this.screen = opts.screen;
     if (opts.viewport) this.viewport = opts.viewport;
+    if (opts.baseBend !== undefined) this.baseBend = opts.baseBend;
+
+    const layout = getGalleryLayout(this.screen.width, this.baseBend);
+    this.bend = layout.bend;
     this.scale = this.screen.height / 1500;
-    this.plane.scale.y = (this.viewport.height * (900 * this.scale)) / this.screen.height;
-    this.plane.scale.x = (this.viewport.width * (700 * this.scale)) / this.screen.width;
+    this.plane.scale.y =
+      (this.viewport.height * (layout.cardHeight * this.scale)) / this.screen.height;
+    this.plane.scale.x =
+      (this.viewport.width * (layout.cardWidth * this.scale)) / this.screen.width;
     this.plane.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
-    this.padding = 2;
+    this.padding = layout.padding;
     this.width = this.plane.scale.x + this.padding;
     this.widthTotal = this.width * this.length;
     this.x = this.width * this.index;
@@ -355,6 +420,7 @@ class GalleryApp {
   onSelect?: (index: number) => void;
   uniqueCount = 0;
   dragDistance = 0;
+  baseBend = 2.25;
 
   boundOnResize!: () => void;
   boundOnWheel!: (e: WheelEvent) => void;
@@ -384,6 +450,7 @@ class GalleryApp {
     this.autoPlay = opts.autoPlay ?? true;
     this.autoPlaySpeed = opts.autoPlaySpeed ?? 0.018;
     this.onSelect = opts.onSelect;
+    this.baseBend = opts.bend ?? 2.25;
     this.onCheckDebounce = debounce(this.onCheck, 200);
     this.createRenderer();
     this.createCamera();
@@ -489,9 +556,12 @@ class GalleryApp {
   }
 
   onTouchUp() {
+    if (!this.isDown) return;
+    const shouldSelect = this.dragDistance < 8;
     this.isDown = false;
+    this.dragDistance = 0;
     this.onCheck();
-    if (this.dragDistance < 8) this.emitSelect();
+    if (shouldSelect) this.emitSelect();
   }
 
   onWheel(e: WheelEvent) {
@@ -521,7 +591,13 @@ class GalleryApp {
     const height = 2 * Math.tan(fov / 2) * this.camera.position.z;
     const width = height * this.camera.aspect;
     this.viewport = { width, height };
-    this.medias?.forEach((media) => media.onResize({ screen: this.screen, viewport: this.viewport }));
+    this.medias?.forEach((media) =>
+      media.onResize({
+        screen: this.screen,
+        viewport: this.viewport,
+        baseBend: this.baseBend,
+      }),
+    );
   }
 
   update() {
