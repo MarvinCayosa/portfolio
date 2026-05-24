@@ -53,6 +53,17 @@ export function PortfolioShell({
       <div className={pageReady ? undefined : "pointer-events-none"}>
         <TooltipProvider>
           <TopChrome />
+          <GradualBlur
+            target="page"
+            position="top"
+            height={reducedEffects ? "5.5rem" : "7.5rem"}
+            strength={reducedEffects ? 2.5 : 3.25}
+            lite
+            curve="bezier"
+            exponential
+            opacity={1}
+            zIndex={35}
+          />
           <PageWrapper>
             <Hero />
             <Skills />

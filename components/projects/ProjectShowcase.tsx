@@ -46,7 +46,7 @@ export function ProjectShowcase({ projects }: ProjectShowcaseProps) {
   return (
     <div className="flex w-full flex-col items-center">
       <p className="mt-4 w-full text-center font-label text-[var(--muted)]">
-        Auto-rotating gallery — hover to pause, click a card for details
+        These are some of the projects I've worked on and applied my skills to.
       </p>
 
       <div className="relative mt-4 w-full max-w-[min(100vw,96rem)] px-0 sm:mt-6">

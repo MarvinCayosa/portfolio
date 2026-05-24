@@ -74,7 +74,7 @@ export const HERO_ROLE_PREFIXES = [
 
 export const HERO_STATS = [
   { label: "Graduation", value: "2026" },
-  { label: "Honors", value: "Magna" },
+  { label: "GPA", value: "1.38" },
   { label: "Focus", value: "Cloud" },
   { label: "Domains", value: "Cloud · Data Analytics" },
 ] as const;
@@ -82,25 +82,25 @@ export const HERO_STATS = [
 export const SOCIAL_LINKS: SocialLink[] = [
   {
     platform: "Facebook",
-    href: "https://facebook.com",
+    href: "https://www.facebook.com/marbeyn.11",
     icon: "facebook",
     ariaLabel: "Visit Facebook profile",
   },
   {
     platform: "GitHub",
-    href: "https://github.com",
+    href: "https://github.com/MarvinCayosa",
     icon: "github",
     ariaLabel: "Visit GitHub profile",
   },
   {
     platform: "LinkedIn",
-    href: "https://linkedin.com",
+    href: "https://www.linkedin.com/in/marvin-cayosa/",
     icon: "linkedin",
     ariaLabel: "Visit LinkedIn profile",
   },
   {
     platform: "Email",
-    href: "mailto:hello@marvincayosa.dev",
+    href: "mailto:cayosa.marvin.official@gmail.com",
     icon: "mail",
     ariaLabel: "Send email",
   },
@@ -163,7 +163,7 @@ export const CONTACT_COPY = {
   title: "Work together",
   subtitle:
     "Collaborate, request freelance work, or connect — choose a path below.",
-  directEmail: "hello@marvincayosa.dev",
+  directEmail: "cayosa.marvin.official@gmail.com",
   paths: [
     {
       id: "collaborate",
@@ -196,7 +196,7 @@ export const CONTACT_COPY = {
 };
 
 export const FOOTER_COPY = {
-  tagline: "Engineering with precision.",
+  tagline: "Designing the future one project at a time.",
   copyright: `© ${new Date().getFullYear()} ${SITE_FULL_NAME}. All rights reserved.`,
 };
 

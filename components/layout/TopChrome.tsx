@@ -16,7 +16,7 @@ export function TopChrome() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-5 py-4 sm:px-8">
+    <header className="fixed top-0 left-0 right-0 z-[45] flex items-center justify-between px-5 py-4 sm:px-8">
       <motion.button
         type="button"
         onClick={() => scrollToSection(SECTION_IDS.HOME)}
