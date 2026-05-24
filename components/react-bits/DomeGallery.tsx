@@ -22,10 +22,6 @@ type DomeGalleryProps = {
   imageBorderRadius?: string;
   openedImageBorderRadius?: string;
   grayscale?: boolean;
-  /** Multiplier on tile rotation; lower = flatter dome (default 1) */
-  curvature?: number;
-  /** Perspective distance as radius × factor; higher = flatter look */
-  perspectiveFactor?: number;
 };
 
 type ItemDef = {
@@ -92,20 +88,10 @@ function buildItems(pool: ImageItem[], seg: number): ItemDef[] {
   const evenYs = [-4, -2, 0, 2, 4];
   const oddYs = [-3, -1, 1, 3, 5];
 
-  const imageCount = pool.length;
-  const tileSize = imageCount > 0 && imageCount <= 18 ? 1 : 2;
-
-  let coords = xCols.flatMap((x, c) => {
+  const coords = xCols.flatMap((x, c) => {
     const ys = c % 2 === 0 ? evenYs : oddYs;
-    return ys.map((y) => ({ x, y, sizeX: tileSize, sizeY: tileSize }));
+    return ys.map(y => ({ x, y, sizeX: 2, sizeY: 2 }));
   });
-
-  // Few photos + many slots = same image stacked everywhere; thin out tile count.
-  if (imageCount > 0 && imageCount < coords.length / 3) {
-    const target = Math.min(coords.length, Math.max(imageCount * 8, 16));
-    const step = coords.length / target;
-    coords = Array.from({ length: target }, (_, i) => coords[Math.floor(i * step)]!);
-  }
 
   const totalSlots = coords.length;
   if (pool.length === 0) {
@@ -170,9 +156,7 @@ export default function DomeGallery({
   openedImageHeight = '400px',
   imageBorderRadius = '30px',
   openedImageBorderRadius = '30px',
-  grayscale = true,
-  curvature = 1,
-  perspectiveFactor = 2,
+  grayscale = true
 }: DomeGalleryProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
@@ -720,9 +704,7 @@ export default function DomeGallery({
           ['--overlay-blur-color' as any]: overlayBlurColor,
           ['--tile-radius' as any]: imageBorderRadius,
           ['--enlarge-radius' as any]: openedImageBorderRadius,
-          ['--image-filter' as any]: grayscale ? 'grayscale(1)' : 'none',
-          ['--curvature' as any]: curvature,
-          ['--perspective-factor' as any]: perspectiveFactor,
+          ['--image-filter' as any]: grayscale ? 'grayscale(1)' : 'none'
         } as React.CSSProperties
       }
     >

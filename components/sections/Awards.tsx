@@ -179,16 +179,7 @@ function AwardsHorizontalScroller({ awards }: { awards: AwardRecord[] }) {
         <ChevronRight className="h-6 w-6" strokeWidth={2} aria-hidden />
       </button>
 
-      <div className="relative min-w-0 md:overflow-hidden">
-        <div
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-[min(32%,8rem)] bg-[linear-gradient(to_right,var(--background)_0%,var(--background)_48%,transparent_100%)] md:block"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-[min(32%,8rem)] bg-[linear-gradient(to_left,var(--background)_0%,var(--background)_48%,transparent_100%)] md:block"
-          aria-hidden
-        />
-
+      <div className="relative min-w-0">
         <div
           ref={scrollerRef}
           role="region"

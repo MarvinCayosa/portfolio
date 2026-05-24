@@ -38,11 +38,10 @@ export function Gallery({ images }: GalleryProps) {
       {domeImages.length > 0 ? (
         <DomeGallery
           images={domeImages}
-          fit={0.95}
-          minRadius={650}
-          maxVerticalRotationDeg={6}
-          segments={22}
-          dragDampening={0.6}
+          fit={0.6}
+          minRadius={900}
+          maxVerticalRotationDeg={8}
+          segments={26}
           overlayBlurColor={overlayColor}
           grayscale={false}
           imageBorderRadius="18px"
