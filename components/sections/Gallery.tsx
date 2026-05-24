@@ -12,7 +12,7 @@ import type { GalleryImageRecord } from "@/types";
 const DomeGallery = dynamic(() => import("@/components/react-bits/DomeGallery"), {
   ssr: false,
   loading: () => (
-    <div className="h-[min(100dvh,900px)] min-h-[70dvh] w-full animate-pulse bg-[var(--background)]" />
+    <div className="h-[min(70dvh,760px)] min-h-[50dvh] w-full animate-pulse bg-[var(--background)] sm:h-[min(100dvh,900px)] sm:min-h-[70dvh]" />
   ),
 });
 
@@ -32,7 +32,7 @@ export function Gallery({ images }: GalleryProps) {
   return (
     <section
       id={SECTION_IDS.GALLERY}
-      className="scroll-mt-20 relative h-[min(100dvh,900px)] min-h-[70dvh] w-full overflow-hidden"
+      className="scroll-mt-20 relative h-[min(70dvh,760px)] min-h-[50dvh] w-full overflow-hidden sm:h-[min(100dvh,900px)] sm:min-h-[70dvh]"
       aria-label="Gallery"
     >
       {domeImages.length > 0 ? (
