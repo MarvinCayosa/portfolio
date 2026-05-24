@@ -92,10 +92,20 @@ function buildItems(pool: ImageItem[], seg: number): ItemDef[] {
   const evenYs = [-4, -2, 0, 2, 4];
   const oddYs = [-3, -1, 1, 3, 5];
 
-  const coords = xCols.flatMap((x, c) => {
+  const imageCount = pool.length;
+  const tileSize = imageCount > 0 && imageCount <= 18 ? 1 : 2;
+
+  let coords = xCols.flatMap((x, c) => {
     const ys = c % 2 === 0 ? evenYs : oddYs;
-    return ys.map(y => ({ x, y, sizeX: 2, sizeY: 2 }));
+    return ys.map((y) => ({ x, y, sizeX: tileSize, sizeY: tileSize }));
   });
+
+  // Few photos + many slots = same image stacked everywhere; thin out tile count.
+  if (imageCount > 0 && imageCount < coords.length / 3) {
+    const target = Math.min(coords.length, Math.max(imageCount * 8, 16));
+    const step = coords.length / target;
+    coords = Array.from({ length: target }, (_, i) => coords[Math.floor(i * step)]!);
+  }
 
   const totalSlots = coords.length;
   if (pool.length === 0) {

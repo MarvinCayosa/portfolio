@@ -47,7 +47,7 @@ function AwardTitle({ title }: { title: string }) {
       <TooltipPrimitive.Trigger asChild>
         <button
           type="button"
-          className="min-w-0 w-full touch-pan-x truncate text-left font-display text-lg text-[var(--foreground)]"
+          className="min-w-0 w-full truncate text-left font-display text-lg text-[var(--foreground)]"
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
           onClick={() => setOpen((v) => !v)}
@@ -179,50 +179,53 @@ function AwardsHorizontalScroller({ awards }: { awards: AwardRecord[] }) {
         <ChevronRight className="h-6 w-6" strokeWidth={2} aria-hidden />
       </button>
 
-      <div
-        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-5 bg-gradient-to-r from-[var(--background)] via-[var(--background)]/35 to-transparent sm:w-8 sm:via-[var(--background)]/45"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-5 bg-gradient-to-l from-[var(--background)] via-[var(--background)]/35 to-transparent sm:w-8 sm:via-[var(--background)]/45"
-        aria-hidden
-      />
+      <div className="relative min-w-0 md:overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-[min(32%,8rem)] bg-[linear-gradient(to_right,var(--background)_0%,var(--background)_48%,transparent_100%)] md:block"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-[min(32%,8rem)] bg-[linear-gradient(to_left,var(--background)_0%,var(--background)_48%,transparent_100%)] md:block"
+          aria-hidden
+        />
 
-      <div
-        ref={scrollerRef}
-        role="region"
-        aria-label="Awards list"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowLeft") scrollByStep(-1);
-          if (e.key === "ArrowRight") scrollByStep(1);
-        }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        className={cn(
-          "no-scrollbar -mx-1 overflow-x-auto overscroll-x-contain px-1 pb-2",
-          "touch-pan-x [-webkit-overflow-scrolling:touch]",
-          !coarsePointer && "cursor-grab md:px-10",
-        )}
-      >
-        <div className="flex w-max gap-3 sm:gap-4">
-          {columns.map((column, colIndex) => (
-            <div
-              key={column.map((a) => a.id ?? a.title).join("-")}
-              className={cn(COLUMN_CLASS, "flex flex-col gap-3 sm:gap-4")}
-            >
-              {column.map((award, rowIndex) => {
-                const globalIndex = colIndex * 2 + rowIndex;
-                return (
-                  <div key={award.id ?? `${award.title}-${globalIndex}`} className="min-h-[140px]">
-                    <AwardCard award={award} index={globalIndex} />
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+        <div
+          ref={scrollerRef}
+          role="region"
+          aria-label="Awards list"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowLeft") scrollByStep(-1);
+            if (e.key === "ArrowRight") scrollByStep(1);
+          }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className={cn(
+            "no-scrollbar overflow-x-auto overscroll-x-contain pb-2",
+            "[-webkit-overflow-scrolling:touch]",
+            !coarsePointer && "cursor-grab",
+          )}
+          style={{ touchAction: "pan-x pan-y" }}
+        >
+          <div className="flex w-max gap-3 sm:gap-4">
+            {columns.map((column, colIndex) => (
+              <div
+                key={column.map((a) => a.id ?? a.title).join("-")}
+                className={cn(COLUMN_CLASS, "flex flex-col gap-3 sm:gap-4")}
+              >
+                {column.map((award, rowIndex) => {
+                  const globalIndex = colIndex * 2 + rowIndex;
+                  return (
+                    <div key={award.id ?? `${award.title}-${globalIndex}`} className="min-h-[140px]">
+                      <AwardCard award={award} index={globalIndex} />
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
