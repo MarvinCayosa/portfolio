@@ -21,6 +21,7 @@ export default async function HomePage() {
       awards={data.awards}
       certifications={data.certifications ?? []}
       gallery={data.gallery ?? []}
+      hero={data.hero ?? null}
       resumeUrl={data.resumeUrl}
       sectionVisibility={data.sectionVisibility}
     />

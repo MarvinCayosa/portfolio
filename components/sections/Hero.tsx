@@ -17,15 +17,22 @@ import {
 } from "@/lib/constants";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { scrollToSection } from "@/lib/utils";
+import type { HeroConfig } from "@/types";
 
 const Silk = dynamic(
   () => import("@/components/react-bits/Silk").then((m) => m.Silk),
   { ssr: false },
 );
 
-export function Hero() {
+interface HeroProps {
+  hero?: HeroConfig | null;
+}
+
+export function Hero({ hero }: HeroProps) {
   const { theme } = useTheme();
   const silkColor = theme === "dark" ? "#3a3a3a" : "#b0aea8";
+  const stats = hero?.stats && hero.stats.length > 0 ? hero.stats : HERO_STATS;
+  const bioBody = hero?.bioBody ?? HERO_COPY.bioBody;
 
   return (
     <section
@@ -72,7 +79,7 @@ export function Hero() {
               <span className="font-display font-semibold italic text-[var(--foreground)]">
                 {HERO_COPY.bioHighlight}
               </span>
-              {HERO_COPY.bioBody}
+              {bioBody}
             </p>
             <p className="mt-3 max-w-xl font-body text-sm font-medium text-[var(--foreground)] sm:text-base">
               {HERO_COPY.bioClosing}
@@ -113,7 +120,7 @@ export function Hero() {
 
           <FadeIn delay={0.28}>
             <dl className="mt-10 grid grid-cols-2 gap-4 border-t border-[var(--border)] pt-6 sm:mt-12 sm:grid-cols-4 sm:gap-5 sm:pt-8">
-              {HERO_STATS.map((stat) => (
+              {stats.map((stat) => (
                 <div key={stat.label}>
                   <dt className="font-label text-[0.55rem] text-[var(--muted)]">
                     {stat.label}

@@ -48,6 +48,7 @@ export function PortfolioShell({
   awards,
   certifications = [],
   gallery = [],
+  hero,
   resumeUrl,
   sectionVisibility,
 }: PortfolioShellProps) {
@@ -92,7 +93,7 @@ export function PortfolioShell({
 
           <PageWrapper>
             {/* Each section is conditionally rendered based on sectionVisibility */}
-            {vis[SECTION_IDS.HOME] !== false && <Hero />}
+            {vis[SECTION_IDS.HOME] !== false && <Hero hero={hero} />}
             {vis[SECTION_IDS.SKILLS] !== false && <Skills />}
             {vis[SECTION_IDS.EXPERIENCE] !== false && (
               <Experience experiences={experiences} />

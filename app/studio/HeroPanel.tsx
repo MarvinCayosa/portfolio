@@ -11,6 +11,7 @@ import React, { useEffect, useState } from "react";
 import { C, SectionCard, Toast } from "./ui";
 import { HeroForm } from "./forms";
 import { useToast } from "./hooks";
+import { HERO_COPY, HERO_ROLE_PREFIXES, HERO_STATS } from "@/lib/constants";
 
 interface HeroPanelProps {
   password: string;
@@ -21,14 +22,30 @@ export function HeroPanel({ password }: HeroPanelProps) {
   const [heroData, setHeroData] = useState<Record<string, unknown> | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const fallbackHero = {
+    ...HERO_COPY,
+    rolePrefixes: [...HERO_ROLE_PREFIXES],
+    stats: HERO_STATS.map((stat) => ({ ...stat })),
+  };
+
   // Load existing hero config from Firestore on mount
   useEffect(() => {
     fetch("/api/studio/collection/siteConfig?doc=hero")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data && typeof data === "object") setHeroData(data);
+      .then(async (res) => {
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
       })
-      .catch(() => {});
+      .then((data) => {
+        if (data && typeof data === "object") {
+          setHeroData(data);
+          return;
+        }
+        setHeroData(fallbackHero);
+      })
+      .catch((err) => {
+        show(String(err), "err");
+        setHeroData(fallbackHero);
+      });
   }, []);
 
   async function handleSave(doc: Record<string, unknown>) {

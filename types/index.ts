@@ -91,6 +91,7 @@ export interface PortfolioPageData {
   skills?: SkillCategory[];
   certifications?: CertificationRecord[];
   gallery?: GalleryImageRecord[];
+  hero?: HeroConfig | null;
   /** Public URL for resume PDF (Studio upload or static fallback). */
   resumeUrl?: string | null;
   sectionVisibility?: SectionVisibility;

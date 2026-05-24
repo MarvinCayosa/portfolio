@@ -11,6 +11,8 @@ const FADE_DURATION = 0.5;
 
 const titleClass =
   "font-display text-3xl tracking-tight text-[var(--foreground)] sm:text-4xl";
+const initialsClass =
+  "font-sans text-3xl tracking-tight text-[var(--foreground)] sm:text-4xl";
 
 export function LoadingScreen() {
   return (
@@ -24,7 +26,7 @@ export function LoadingScreen() {
         className="flex items-center gap-2.5 px-4 sm:gap-3"
         aria-label={`${LOADING_COPY.initials}, ${LOADING_COPY.role}`}
       >
-        <span className={titleClass}>{LOADING_COPY.initials}</span>
+        <span className={initialsClass}>{LOADING_COPY.initials}</span>
 
         <motion.span
           className={titleClass}

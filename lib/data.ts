@@ -23,6 +23,7 @@ import type {
   EducationRecord,
   ExperienceRecord,
   GalleryImageRecord,
+  HeroConfig,
   PortfolioPageData,
   ProjectRecord,
   SectionVisibility,
@@ -85,6 +86,19 @@ type FSGallery = {
   image?: string;
   alt?: string | null;
   order?: number;
+};
+
+type FSHero = {
+  firstName?: string;
+  lastName?: string;
+  bioRole?: string;
+  bioHighlight?: string;
+  bioBody?: string;
+  bioClosing?: string;
+  location?: string;
+  availability?: string;
+  rolePrefixes?: unknown[];
+  stats?: unknown[];
 };
 
 /** Generic Firestore document wrapper */
@@ -225,6 +239,43 @@ function mapCertifications(docs: FSDoc<FSCertification>[]): CertificationRecord[
   });
 }
 
+function mapHeroConfig(data?: FSHero | null): HeroConfig | null {
+  if (!data) return null;
+
+  const rolePrefixes = Array.isArray(data.rolePrefixes)
+    ? data.rolePrefixes.filter((p): p is string => typeof p === "string" && p.trim().length > 0)
+    : undefined;
+
+  const stats = Array.isArray(data.stats)
+    ? data.stats
+        .map((entry) => {
+          if (!entry || typeof entry !== "object") return null;
+          const label = typeof (entry as { label?: unknown }).label === "string"
+            ? String((entry as { label?: unknown }).label)
+            : "";
+          const value = typeof (entry as { value?: unknown }).value === "string"
+            ? String((entry as { value?: unknown }).value)
+            : "";
+          if (!label && !value) return null;
+          return { label, value };
+        })
+        .filter((s): s is { label: string; value: string } => Boolean(s))
+    : undefined;
+
+  return {
+    firstName: typeof data.firstName === "string" ? data.firstName : undefined,
+    lastName: typeof data.lastName === "string" ? data.lastName : undefined,
+    bioRole: typeof data.bioRole === "string" ? data.bioRole : undefined,
+    bioHighlight: typeof data.bioHighlight === "string" ? data.bioHighlight : undefined,
+    bioBody: typeof data.bioBody === "string" ? data.bioBody : undefined,
+    bioClosing: typeof data.bioClosing === "string" ? data.bioClosing : undefined,
+    location: typeof data.location === "string" ? data.location : undefined,
+    availability: typeof data.availability === "string" ? data.availability : undefined,
+    rolePrefixes,
+    stats,
+  };
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 /**
@@ -237,7 +288,17 @@ export async function getPortfolioData(): Promise<PortfolioPageData> {
     const { firestore } = getFirebaseServices();
 
     // Fetch all collections in parallel for speed
-    const [projSnap, expSnap, eduSnap, awardSnap, certSnap, gallerySnap, visSnap, resumeSnap] =
+    const [
+      projSnap,
+      expSnap,
+      eduSnap,
+      awardSnap,
+      certSnap,
+      gallerySnap,
+      heroSnap,
+      visSnap,
+      resumeSnap,
+    ] =
       await Promise.all([
         firestore.collection("projects").get(),
         firestore.collection("experiences").get(),
@@ -245,6 +306,7 @@ export async function getPortfolioData(): Promise<PortfolioPageData> {
         firestore.collection("awards").get(),
         firestore.collection("certifications").get(),
         firestore.collection("gallery").get(),
+        firestore.collection("siteConfig").doc("hero").get(),
         firestore.collection("siteConfig").doc("visibility").get(),
         firestore.collection("siteConfig").doc("resume").get(),
       ]);
@@ -274,6 +336,10 @@ export async function getPortfolioData(): Promise<PortfolioPageData> {
       ? FALLBACK_GALLERY
       : mapGallery(gallerySnap.docs as FSDoc<FSGallery>[]);
 
+    const hero = heroSnap.exists
+      ? mapHeroConfig(heroSnap.data() as FSHero)
+      : null;
+
     // sectionVisibility — merge stored values with defaults so new sections
     // are always visible until explicitly hidden
     const storedVis = visSnap.exists
@@ -297,6 +363,7 @@ export async function getPortfolioData(): Promise<PortfolioPageData> {
       awards,
       certifications,
       gallery,
+      hero,
       resumeUrl,
       sectionVisibility,
     };
@@ -309,6 +376,7 @@ export async function getPortfolioData(): Promise<PortfolioPageData> {
       awards: FALLBACK_AWARDS,
       certifications: FALLBACK_CERTIFICATIONS,
       gallery: FALLBACK_GALLERY,
+      hero: null,
       sectionVisibility: DEFAULT_SECTION_VISIBILITY,
     };
   }
