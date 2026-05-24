@@ -62,17 +62,19 @@ function ImageCarousel({ images, title }: { images: string[]; title: string }) {
             type="button"
             onClick={() => go(-1)}
             aria-label="Previous image"
-            className="absolute left-2 top-1/2 z-10 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70"
+            className="absolute left-3 top-1/2 z-10 -translate-y-1/2 p-1 text-white transition-opacity hover:opacity-90"
+            style={{ filter: "drop-shadow(3px 0 10px rgba(0,0,0,0.55))" }}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-6 w-6" strokeWidth={2} />
           </button>
           <button
             type="button"
             onClick={() => go(1)}
             aria-label="Next image"
-            className="absolute right-2 top-1/2 z-10 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70"
+            className="absolute right-3 top-1/2 z-10 -translate-y-1/2 p-1 text-white transition-opacity hover:opacity-90"
+            style={{ filter: "drop-shadow(-3px 0 10px rgba(0,0,0,0.55))" }}
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-6 w-6" strokeWidth={2} />
           </button>
           <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
             {images.map((_, i) => (
