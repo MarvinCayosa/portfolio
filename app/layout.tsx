@@ -45,7 +45,7 @@ export default function RootLayout({
       className={`${playfair.variable} ${dmSans.variable} ${jetbrains.variable} h-full`}
       suppressHydrationWarning
     >
-      <body className="relative min-h-dvh font-body antialiased">
+      <body className="relative min-h-dvh font-body antialiased" suppressHydrationWarning>
         <ThemeProvider>
           <div
             className={`${playfair.variable} ${dmSans.variable} ${jetbrains.variable}`}

@@ -107,23 +107,6 @@ function AwardsHorizontalScroller({ awards }: { awards: AwardRecord[] }) {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  useEffect(() => {
-    if (coarsePointer) return;
-    const el = scrollerRef.current;
-    if (!el) return;
-
-    const onWheel = (e: WheelEvent) => {
-      const absX = Math.abs(e.deltaX);
-      const absY = Math.abs(e.deltaY);
-      if (absY <= absX) return;
-      e.preventDefault();
-      el.scrollLeft += e.deltaY;
-    };
-
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, [coarsePointer]);
-
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (coarsePointer || e.pointerType === "touch") return;
     if (e.button !== 0) return;
@@ -156,30 +139,21 @@ function AwardsHorizontalScroller({ awards }: { awards: AwardRecord[] }) {
   };
 
   const navBtnClass =
-    "absolute top-1/2 z-20 hidden -translate-y-1/2 p-1 text-[var(--foreground)]/80 transition-opacity hover:text-[var(--foreground)] md:flex";
+    "hidden p-1 text-[var(--foreground)]/80 transition-opacity hover:text-[var(--foreground)] md:flex";
 
   return (
-    <div className="relative min-w-0">
+    <div className="flex min-w-0 items-center gap-3">
       <button
         type="button"
         onClick={() => scrollByStep(-1)}
         aria-label="Scroll awards left"
-        className={cn(navBtnClass, "left-0")}
+        className={navBtnClass}
         style={{ filter: "drop-shadow(2px 0 8px rgba(0,0,0,0.35))" }}
       >
         <ChevronLeft className="h-6 w-6" strokeWidth={2} aria-hidden />
       </button>
-      <button
-        type="button"
-        onClick={() => scrollByStep(1)}
-        aria-label="Scroll awards right"
-        className={cn(navBtnClass, "right-0")}
-        style={{ filter: "drop-shadow(-2px 0 8px rgba(0,0,0,0.35))" }}
-      >
-        <ChevronRight className="h-6 w-6" strokeWidth={2} aria-hidden />
-      </button>
 
-      <div className="relative min-w-0">
+      <div className="relative min-w-0 flex-1">
         <div
           ref={scrollerRef}
           role="region"
@@ -219,6 +193,16 @@ function AwardsHorizontalScroller({ awards }: { awards: AwardRecord[] }) {
           </div>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => scrollByStep(1)}
+        aria-label="Scroll awards right"
+        className={navBtnClass}
+        style={{ filter: "drop-shadow(-2px 0 8px rgba(0,0,0,0.35))" }}
+      >
+        <ChevronRight className="h-6 w-6" strokeWidth={2} aria-hidden />
+      </button>
     </div>
   );
 }
