@@ -22,7 +22,7 @@
 
 .gallery-card-label {
   position: absolute;
-  transform: translate(-50%, 0);
+  transform-origin: center top;
   max-width: min(160px, 28vw);
   text-align: center;
   font-family: var(--font-playfair), Georgia, serif;

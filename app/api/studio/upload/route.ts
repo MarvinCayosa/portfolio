@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getFirebaseServices } from "@/lib/db";
+import { uploadStudioImage } from "@/lib/studio-storage";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
@@ -14,30 +14,21 @@ export async function POST(request: Request) {
     const file = form.get("file") as File | null;
     if (!file) return NextResponse.json({ error: "Missing file" }, { status: 400 });
 
-    // Enforce 5MB file size limit
-    const MAX_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+    const MAX_SIZE = 5 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       return NextResponse.json({ error: "File size exceeds 5MB limit" }, { status: 400 });
     }
 
-    const { bucket } = getFirebaseServices();
-    const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "-")}`;
-    const destination = `uploads/${filename}`;
-
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+    const filename = `${Date.now()}-${safeName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
-    const fileRef = bucket.file(destination);
-    await fileRef.save(buffer, { metadata: { contentType: file.type } });
 
-    // Make public so URL is accessible — optional but convenient for portfolio images
-    try {
-      await fileRef.makePublic();
-    } catch {
-      // ignore permission errors
-    }
+    const { url } = await uploadStudioImage(buffer, filename, file.type || "image/jpeg");
 
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${encodeURIComponent(fileRef.name)}`;
-    return NextResponse.json({ ok: true, url: publicUrl });
+    return NextResponse.json({ ok: true, url });
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[studio/upload]", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -23,6 +23,7 @@ export interface GalleryCardLabel {
   index: number;
   x: number;
   y: number;
+  rotation: number;
   opacity: number;
 }
 
@@ -613,13 +614,18 @@ class GalleryApp {
       const screenX = w / 2 + (worldX / (vw * 0.5)) * (w * 0.5);
       const screenY = h / 2 - (worldY / (vh * 0.5)) * (h * 0.5);
       const cardH = ((media.baseScaleY * media.scaleMultiplier) / vh) * h;
+      const halfH = cardH * 0.5;
+      const rot = -media.plane.rotation.z;
       const opacity = Math.max(0, 1 - Math.abs(worldX) / (vw * 0.62));
+      const anchorX = screenX + Math.sin(rot) * halfH;
+      const anchorY = screenY + Math.cos(rot) * halfH + 8;
 
       labels.push({
         key: i,
         index: i % this.uniqueCount,
-        x: screenX,
-        y: screenY + cardH * 0.5 + 10,
+        x: anchorX,
+        y: anchorY,
+        rotation: rot,
         opacity,
       });
     }
@@ -861,6 +867,7 @@ export function CircularGallery({
         node.textContent = title;
         node.style.left = `${label.x}px`;
         node.style.top = `${label.y}px`;
+        node.style.transform = `translate(-50%, 0) rotate(${label.rotation}rad)`;
         node.style.opacity = String(label.opacity);
         node.style.visibility = label.opacity < 0.08 ? "hidden" : "visible";
       });

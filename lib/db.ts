@@ -5,6 +5,7 @@
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
+import { resolveStorageBucketName } from "@/lib/firebase-bucket";
 
 type FirebaseServices = {
   app: App;
@@ -34,8 +35,7 @@ export function getFirebaseServices(): FirebaseServices {
   const projectId = getRequiredEnv("FIREBASE_PROJECT_ID");
   const clientEmail = getRequiredEnv("FIREBASE_CLIENT_EMAIL");
   const privateKey = getRequiredEnv("FIREBASE_PRIVATE_KEY").replace(/\\n/g, "\n");
-  const storageBucket =
-    process.env.FIREBASE_STORAGE_BUCKET?.trim() || `${projectId}.firebasestorage.app`;
+  const storageBucket = resolveStorageBucketName(projectId);
 
   const app =
     getApps()[0] ??

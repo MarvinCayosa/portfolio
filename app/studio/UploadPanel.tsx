@@ -80,9 +80,10 @@ export const UploadPanel = forwardRef<UploadPanelHandle, UploadPanelProps>(
         form.append("adminPassword", password);
 
         const res = await fetch("/api/studio/upload", { method: "POST", body: form });
-        if (!res.ok) throw new Error("Upload failed");
-
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(typeof data?.error === "string" ? data.error : "Upload failed");
+        }
         if (!data?.url) throw new Error("No URL returned");
 
         const fromForm = Boolean(pendingCallback.current);
