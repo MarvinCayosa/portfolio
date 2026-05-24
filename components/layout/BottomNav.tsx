@@ -1,5 +1,6 @@
 /**
  * BottomNav — full bar on desktop; compact menu button on mobile.
+ * Accepts an optional `visibleSections` set — items not in the set are hidden.
  */
 
 "use client";
@@ -7,6 +8,7 @@
 import { useEffect, useState } from "react";
 import {
   Award,
+  BadgeCheck,
   Briefcase,
   FolderOpen,
   GraduationCap,
@@ -28,13 +30,24 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   layers: Layers,
   briefcase: Briefcase,
   folder: FolderOpen,
+  certificate: BadgeCheck,
   "graduation-cap": GraduationCap,
   award: Award,
   mail: Mail,
 };
 
-export function BottomNav() {
-  const sectionIds = NAV_ITEMS.map((item) => item.id);
+interface BottomNavProps {
+  /** Section IDs that are currently visible. When undefined, all are shown. */
+  visibleSections?: Set<string>;
+}
+
+export function BottomNav({ visibleSections }: BottomNavProps = {}) {
+  // Filter nav items to only those whose section is visible
+  const visibleItems = visibleSections
+    ? NAV_ITEMS.filter((item) => visibleSections.has(item.id))
+    : NAV_ITEMS;
+
+  const sectionIds = visibleItems.map((item) => item.id);
   const activeId = useScrollSpy(sectionIds);
   const glass = THEME.glassNav;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -70,7 +83,7 @@ export function BottomNav() {
           className="mx-auto max-w-fit"
         >
           <ul className="flex items-center gap-0.5 px-1.5 py-1.5 lg:gap-1">
-            {NAV_ITEMS.map((item) => {
+            {visibleItems.map((item) => {
               const Icon = iconMap[item.icon] ?? Home;
               const isActive = activeId === item.id;
               return (
@@ -145,7 +158,7 @@ export function BottomNav() {
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             >
               <ul className="grid grid-cols-2 gap-1 p-2">
-                {NAV_ITEMS.map((item) => {
+                {visibleItems.map((item) => {
                   const Icon = iconMap[item.icon] ?? Home;
                   const isActive = activeId === item.id;
                   return (

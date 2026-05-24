@@ -24,41 +24,43 @@ export interface SkillCategory {
 }
 
 export interface ProjectRecord {
-  id: number;
+  id?: string;
   title: string;
-  description: string;
-  tags: string[];
-  url: string | null;
-  repoUrl: string | null;
-  featured: boolean;
+  description?: string | null;
+  tags?: string[];
+  url?: string | null;
+  repoUrl?: string | null;
+  featured?: boolean;
   image?: string | null;
-  collaborators?: string | null;
+  photos?: string[]; // image URLs
+  collaborators?: string[] | null;
+  order?: number;
 }
 
 export interface ExperienceRecord {
-  id: number;
+  id?: string;
   company: string;
   role: string;
-  startDate: Date;
-  endDate: Date | null;
-  current: boolean;
-  bullets: string[];
-  order: number;
+  startDate: string | Date; // ISO date string or Date object
+  endDate?: string | Date | null;
+  current?: boolean;
+  bullets?: string[];
+  order?: number;
 }
 
 export interface EducationRecord {
-  id: number;
+  id?: string;
   degree: string;
   institution: string;
-  year: number;
-  notes: string | null;
+  year?: number;
+  notes?: string | null;
 }
 
 export interface AwardRecord {
-  id: number;
+  id?: string;
   title: string;
-  issuer: string;
-  year: number;
+  issuer?: string;
+  year?: number;
 }
 
 export interface ContactFormData {
@@ -77,4 +79,32 @@ export interface PortfolioPageData {
   experiences: ExperienceRecord[];
   education: EducationRecord[];
   awards: AwardRecord[];
+  skills?: SkillCategory[];
+  certifications?: CertificationRecord[];
+  sectionVisibility?: SectionVisibility;
+}
+
+export interface CertificationRecord {
+  id?: string;
+  title: string;
+  issuer?: string;
+  date?: string; // ISO date
+  url?: string | null;
+  notes?: string | null;
+}
+
+export type SectionVisibility = Record<string, boolean>;
+
+/** Hero section config stored in Firestore siteConfig/hero */
+export interface HeroConfig {
+  firstName?: string;
+  lastName?: string;
+  bioRole?: string;
+  bioHighlight?: string;
+  bioBody?: string;
+  bioClosing?: string;
+  location?: string;
+  availability?: string;
+  rolePrefixes?: string[]; // e.g. ["Cloud", "Data", "Software"]
+  stats?: Array<{ label: string; value: string }>;
 }

@@ -18,6 +18,14 @@ export interface CircularGalleryItem {
   text: string;
 }
 
+export interface GalleryCardLabel {
+  key: number;
+  index: number;
+  x: number;
+  y: number;
+  opacity: number;
+}
+
 export interface CircularGalleryProps {
   items?: CircularGalleryItem[];
   bend?: number;
@@ -28,6 +36,11 @@ export interface CircularGalleryProps {
   autoPlay?: boolean;
   autoPlaySpeed?: number;
   onSelect?: (index: number) => void;
+  /** Called whenever the centered card changes */
+  onActiveChange?: (index: number) => void;
+  font?: string;
+  /** When true, project names render as HTML under each card (recommended) */
+  htmlLabels?: boolean;
   className?: string;
 }
 
@@ -95,6 +108,11 @@ function autoBind(instance: object) {
   });
 }
 
+function parseFontSizePx(font: string) {
+  const match = font.match(/(\d+(?:\.\d+)?)\s*px/i);
+  return match ? Number(match[1]) : 30;
+}
+
 function createTextTexture(
   gl: GL,
   text: string,
@@ -106,7 +124,7 @@ function createTextTexture(
   context.font = font;
   const metrics = context.measureText(text);
   const textWidth = Math.ceil(metrics.width);
-  const textHeight = Math.ceil(parseInt(font, 10) * 1.2);
+  const textHeight = Math.ceil(parseFontSizePx(font) * 1.25);
   canvas.width = textWidth + 20;
   canvas.height = textHeight + 20;
   context.font = font;
@@ -117,6 +135,7 @@ function createTextTexture(
   context.fillText(text, canvas.width / 2, canvas.height / 2);
   const texture = new Texture(gl, { generateMipmaps: false });
   texture.image = canvas;
+  texture.needsUpdate = true;
   return { texture, width: canvas.width, height: canvas.height };
 }
 
@@ -156,6 +175,8 @@ class Title {
     );
     const geometry = new Plane(this.gl);
     const program = new Program(this.gl, {
+      depthTest: false,
+      depthWrite: false,
       vertex: `
         attribute vec3 position;
         attribute vec2 uv;
@@ -173,7 +194,7 @@ class Title {
         varying vec2 vUv;
         void main() {
           vec4 color = texture2D(tMap, vUv);
-          if (color.a < 0.1) discard;
+          if (color.a < 0.08) discard;
           gl_FragColor = color;
         }
       `,
@@ -181,12 +202,24 @@ class Title {
       transparent: true,
     });
     this.mesh = new Mesh(this.gl, { geometry, program });
+    this.mesh.setParent(this.plane);
+    this.layout();
+  }
+
+  layout() {
+    if (!this.mesh) return;
+    const { texture, width, height } = createTextTexture(
+      this.gl,
+      this.text,
+      this.font,
+      this.textColor,
+    );
+    (this.mesh.program.uniforms.tMap as { value: Texture }).value = texture;
     const aspect = width / height;
-    const textHeight = this.plane.scale.y * 0.15;
+    const textHeight = Math.max(this.plane.scale.y * 0.11, 0.08);
     const textWidth = textHeight * aspect;
     this.mesh.scale.set(textWidth, textHeight, 1);
-    this.mesh.position.y = -this.plane.scale.y * 0.5 - textHeight * 0.5 - 0.05;
-    this.mesh.setParent(this.plane);
+    this.mesh.position.y = -this.plane.scale.y * 0.5 - textHeight * 0.5 - 0.06;
   }
 }
 
@@ -208,7 +241,8 @@ class Media {
   font!: string;
   program!: Program;
   plane!: Mesh;
-  title!: Title;
+  title: Title | null = null;
+  showWebGLTitle = true;
   speed = 0;
   isBefore = false;
   isAfter = false;
@@ -218,6 +252,11 @@ class Media {
   widthTotal = 0;
   x = 0;
   baseBend = 2.25;
+  baseScaleX = 1;
+  baseScaleY = 1;
+  scaleMultiplier = 1;
+  isHovered = false;
+  isActive = false;
 
   constructor(opts: {
     geometry: Plane;
@@ -234,15 +273,17 @@ class Media {
     textColor: string;
     borderRadius?: number;
     font?: string;
+    showWebGLTitle?: boolean;
   }) {
     autoBind(this);
     Object.assign(this, opts);
     this.borderRadius = opts.borderRadius ?? 0;
     this.font = opts.font ?? "30px sans-serif";
+    this.showWebGLTitle = opts.showWebGLTitle ?? true;
     this.createShader();
     this.createMesh();
-    this.createTitle();
     this.onResize();
+    if (this.showWebGLTitle) this.createTitle();
   }
 
   createShader() {
@@ -371,6 +412,14 @@ class Media {
       this.extra += this.widthTotal;
       this.isBefore = this.isAfter = false;
     }
+
+    this.isActive = Math.abs(this.plane.position.x) < this.width * 0.35;
+    const hoverScale = this.isHovered ? 1.08 : 1;
+    const activeScale = this.isActive && !this.isHovered ? 1.04 : 1;
+    const targetScale = hoverScale * activeScale;
+    this.scaleMultiplier = lerp(this.scaleMultiplier, targetScale, 0.14);
+    this.plane.scale.x = this.baseScaleX * this.scaleMultiplier;
+    this.plane.scale.y = this.baseScaleY * this.scaleMultiplier;
   }
 
   onResize(opts: {
@@ -385,15 +434,18 @@ class Media {
     const layout = getGalleryLayout(this.screen.width, this.baseBend);
     this.bend = layout.bend;
     this.scale = this.screen.height / 1500;
-    this.plane.scale.y =
+    this.baseScaleY =
       (this.viewport.height * (layout.cardHeight * this.scale)) / this.screen.height;
-    this.plane.scale.x =
+    this.baseScaleX =
       (this.viewport.width * (layout.cardWidth * this.scale)) / this.screen.width;
+    this.plane.scale.y = this.baseScaleY * this.scaleMultiplier;
+    this.plane.scale.x = this.baseScaleX * this.scaleMultiplier;
     this.plane.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
     this.padding = layout.padding;
     this.width = this.plane.scale.x + this.padding;
     this.widthTotal = this.width * this.length;
     this.x = this.width * this.index;
+    this.title?.layout();
   }
 }
 
@@ -418,11 +470,18 @@ class GalleryApp {
   autoPlay: boolean;
   autoPlaySpeed: number;
   onSelect?: (index: number) => void;
+  onActiveChange?: (index: number) => void;
+  onLabelPositions?: (labels: GalleryCardLabel[]) => void;
+  htmlLabels = false;
   uniqueCount = 0;
   dragDistance = 0;
   baseBend = 2.25;
+  _lastEmittedActive = -1;
+  mouseX = -1;
+  mouseY = -1;
 
   boundOnResize!: () => void;
+  boundOnMouseMove!: (e: MouseEvent) => void;
   boundOnWheel!: (e: WheelEvent) => void;
   boundOnTouchDown!: (e: MouseEvent | TouchEvent) => void;
   boundOnTouchMove!: (e: MouseEvent | TouchEvent) => void;
@@ -441,6 +500,9 @@ class GalleryApp {
       autoPlay?: boolean;
       autoPlaySpeed?: number;
       onSelect?: (index: number) => void;
+      onActiveChange?: (index: number) => void;
+      onLabelPositions?: (labels: GalleryCardLabel[]) => void;
+      htmlLabels?: boolean;
     } = {},
   ) {
     autoBind(this);
@@ -450,6 +512,9 @@ class GalleryApp {
     this.autoPlay = opts.autoPlay ?? true;
     this.autoPlaySpeed = opts.autoPlaySpeed ?? 0.018;
     this.onSelect = opts.onSelect;
+    this.onActiveChange = opts.onActiveChange;
+    this.onLabelPositions = opts.onLabelPositions;
+    this.htmlLabels = opts.htmlLabels ?? false;
     this.baseBend = opts.bend ?? 2.25;
     this.onCheckDebounce = debounce(this.onCheck, 200);
     this.createRenderer();
@@ -525,8 +590,41 @@ class GalleryApp {
         textColor,
         borderRadius,
         font,
+        showWebGLTitle: !this.htmlLabels,
       });
     });
+  }
+
+  emitLabelPositions() {
+    if (!this.onLabelPositions || !this.medias?.length) return;
+
+    const vw = this.viewport.width;
+    const vh = this.viewport.height;
+    const w = this.screen.width;
+    const h = this.screen.height;
+    const labels: GalleryCardLabel[] = [];
+
+    for (let i = 0; i < this.medias.length; i++) {
+      const media = this.medias[i];
+      const worldX = media.plane.position.x;
+      if (Math.abs(worldX) > vw * 0.92) continue;
+
+      const worldY = media.plane.position.y;
+      const screenX = w / 2 + (worldX / (vw * 0.5)) * (w * 0.5);
+      const screenY = h / 2 - (worldY / (vh * 0.5)) * (h * 0.5);
+      const cardH = ((media.baseScaleY * media.scaleMultiplier) / vh) * h;
+      const opacity = Math.max(0, 1 - Math.abs(worldX) / (vw * 0.62));
+
+      labels.push({
+        key: i,
+        index: i % this.uniqueCount,
+        x: screenX,
+        y: screenY + cardH * 0.5 + 10,
+        opacity,
+      });
+    }
+
+    this.onLabelPositions(labels);
   }
 
   getActiveIndex() {
@@ -534,6 +632,38 @@ class GalleryApp {
     const width = this.medias[0].width;
     const raw = Math.round(Math.abs(this.scroll.current) / width);
     return raw % this.uniqueCount;
+  }
+
+  findHoveredMedia(clientX: number, clientY: number): Media | null {
+    if (!this.medias?.length || clientX < 0) return null;
+
+    const rect = this.container.getBoundingClientRect();
+    const mx = clientX - rect.left;
+    const my = clientY - rect.top;
+    const vw = this.viewport.width;
+    const vh = this.viewport.height;
+
+    let closest: Media | null = null;
+    let closestDist = Infinity;
+
+    for (const media of this.medias) {
+      const worldX = media.plane.position.x;
+      const worldY = media.plane.position.y;
+      const screenX = rect.width / 2 + (worldX / (vw * 0.5)) * (rect.width * 0.5);
+      const screenY = rect.height / 2 - (worldY / (vh * 0.5)) * (rect.height * 0.5);
+      const cardW = (media.baseScaleX / vw) * rect.width;
+      const cardH = (media.baseScaleY / vh) * rect.height;
+
+      if (Math.abs(mx - screenX) < cardW * 0.52 && Math.abs(my - screenY) < cardH * 0.58) {
+        const dist = Math.hypot(mx - screenX, my - screenY);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closest = media;
+        }
+      }
+    }
+
+    return closest;
   }
 
   emitSelect() {
@@ -606,9 +736,30 @@ class GalleryApp {
     }
     this.scroll.current = lerp(this.scroll.current, this.scroll.target, this.scroll.ease);
     const direction = this.scroll.current > this.scroll.last ? "right" : "left";
-    this.medias?.forEach((media) => media.update(this.scroll, direction));
+    const activeIndex = this.getActiveIndex();
+    const hovered =
+      !this.isDown && this.mouseX >= 0 ? this.findHoveredMedia(this.mouseX, this.mouseY) : null;
+
+    this.medias?.forEach((media) => {
+      media.isHovered = hovered === media;
+      media.update(this.scroll, direction);
+    });
+    this.container.style.cursor = this.isDown
+      ? "grabbing"
+      : hovered
+        ? "pointer"
+        : "grab";
     this.renderer.render({ scene: this.scene, camera: this.camera });
+    this.emitLabelPositions();
     this.scroll.last = this.scroll.current;
+
+    // Emit active index change whenever the centered card changes
+    const newActive = activeIndex;
+    if (newActive !== this._lastEmittedActive) {
+      this._lastEmittedActive = newActive;
+      this.onActiveChange?.(newActive);
+    }
+
     this.raf = window.requestAnimationFrame(this.update.bind(this));
   }
 
@@ -626,11 +777,20 @@ class GalleryApp {
     this.container.addEventListener("touchstart", this.boundOnTouchDown, { passive: true });
     this.container.addEventListener("touchmove", this.boundOnTouchMove, { passive: true });
     this.container.addEventListener("touchend", this.onTouchUp);
-    this.container.addEventListener("mouseenter", () => {
+    this.boundOnMouseMove = (e: MouseEvent) => {
+      this.mouseX = e.clientX;
+      this.mouseY = e.clientY;
+    };
+    this.container.addEventListener("mousemove", this.boundOnMouseMove);
+    this.container.addEventListener("mouseenter", (e: MouseEvent) => {
       this.isPaused = true;
+      this.mouseX = e.clientX;
+      this.mouseY = e.clientY;
     });
     this.container.addEventListener("mouseleave", () => {
       this.isPaused = false;
+      this.mouseX = -1;
+      this.mouseY = -1;
     });
   }
 
@@ -644,6 +804,7 @@ class GalleryApp {
     this.container.removeEventListener("touchstart", this.boundOnTouchDown);
     this.container.removeEventListener("touchmove", this.boundOnTouchMove);
     this.container.removeEventListener("touchend", this.onTouchUp);
+    this.container.removeEventListener("mousemove", this.boundOnMouseMove);
     if (this.renderer?.gl?.canvas?.parentNode) {
       this.renderer.gl.canvas.parentNode.removeChild(this.renderer.gl.canvas);
     }
@@ -660,13 +821,51 @@ export function CircularGallery({
   autoPlay = true,
   autoPlaySpeed = 0.018,
   onSelect,
+  onActiveChange,
+  font = '600 22px "Playfair Display", Georgia, serif',
+  htmlLabels = true,
   className = "",
 }: CircularGalleryProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const labelsRef = useRef<HTMLDivElement>(null);
+  const labelPoolRef = useRef<HTMLDivElement[]>([]);
+  const itemsRef = useRef(items);
+
+  itemsRef.current = items;
 
   useEffect(() => {
     const el = containerRef.current;
+    const labelsRoot = labelsRef.current;
     if (!el) return;
+
+    const syncLabels = (labels: GalleryCardLabel[]) => {
+      if (!labelsRoot) return;
+      const galleryItems = itemsRef.current ?? [];
+      const pool = labelPoolRef.current;
+
+      while (pool.length < labels.length) {
+        const node = document.createElement("div");
+        node.className = "gallery-card-label";
+        labelsRoot.appendChild(node);
+        pool.push(node);
+      }
+      while (pool.length > labels.length) {
+        pool.pop()?.remove();
+      }
+
+      labels.forEach((label, i) => {
+        const node = pool[i];
+        if (!node) return;
+        const title = galleryItems[label.index]?.text ?? "";
+        node.textContent = title;
+        node.style.left = `${label.x}px`;
+        node.style.top = `${label.y}px`;
+        node.style.opacity = String(label.opacity);
+        node.style.visibility = label.opacity < 0.08 ? "hidden" : "visible";
+      });
+    };
+
     const app = new GalleryApp(el, {
       items,
       bend,
@@ -677,16 +876,29 @@ export function CircularGallery({
       autoPlay,
       autoPlaySpeed,
       onSelect,
+      onActiveChange,
+      font,
+      htmlLabels,
+      onLabelPositions: htmlLabels ? syncLabels : undefined,
     });
-    return () => app.destroy();
-  }, [items, bend, textColor, borderRadius, scrollSpeed, scrollEase, autoPlay, autoPlaySpeed, onSelect]);
+    return () => {
+      app.destroy();
+      labelPoolRef.current.forEach((node) => node.remove());
+      labelPoolRef.current = [];
+    };
+  }, [items, bend, textColor, borderRadius, scrollSpeed, scrollEase, autoPlay, autoPlaySpeed, onSelect, onActiveChange, font, htmlLabels]);
 
   return (
-    <div
-      ref={containerRef}
-      className={`circular-gallery ${className}`}
-      role="region"
-      aria-label="Project gallery"
-    />
+    <div ref={rootRef} className={`circular-gallery-root relative h-full w-full ${className}`}>
+      <div
+        ref={containerRef}
+        className="circular-gallery h-full w-full"
+        role="region"
+        aria-label="Project gallery"
+      />
+      {htmlLabels && (
+        <div ref={labelsRef} className="gallery-card-labels pointer-events-none absolute inset-0 overflow-visible" />
+      )}
+    </div>
   );
 }

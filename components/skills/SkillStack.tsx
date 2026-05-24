@@ -15,7 +15,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { TechIcon } from "@/components/skills/TechIcon";
-import { getPillHighlightColor } from "@/lib/skill-pill-colors";
+import { getPillHighlightColor, getPillColorForIndex } from "@/lib/skill-pill-colors";
+import type { PillColor } from "@/lib/skill-pill-colors";
 import type { SkillCategory } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -45,13 +46,14 @@ function SkillPillButton({
   pill,
   highlighted,
   dimmed,
+  color,
 }: {
   pill: SkillPillData;
   highlighted: boolean;
   dimmed: boolean;
+  color: PillColor | null;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const accent = highlighted ? getPillHighlightColor(pill.skill) : null;
 
   const onMove = (e: React.MouseEvent) => {
     const el = ref.current;
@@ -67,19 +69,15 @@ function SkillPillButton({
       onMouseMove={onMove}
       className={cn(
         "tech-glare-chip mb-3 inline-flex w-full break-inside-avoid items-center gap-2 rounded-full border px-3 py-2 transition-all duration-300",
-        !highlighted &&
+        !color &&
           !dimmed &&
           "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] hover:-translate-y-0.5 hover:border-[var(--foreground)]/25 hover:bg-[var(--surface-elevated)]",
         dimmed &&
           "border-[var(--border)]/30 bg-[var(--surface)]/20 text-[var(--muted)]/45 opacity-60",
       )}
       style={
-        highlighted && accent
-          ? {
-              backgroundColor: accent.bg,
-              borderColor: accent.border,
-              color: accent.text,
-            }
+        color && !dimmed
+          ? { backgroundColor: color.bg, borderColor: color.border, color: color.text }
           : undefined
       }
     >
@@ -151,11 +149,15 @@ export function SkillStack({ categories }: { categories: SkillCategory[] }) {
       </div>
 
       <div className="columns-2 gap-3 sm:columns-3 lg:columns-4 xl:columns-5">
-        {pills.map((pill) => {
-          const highlighted =
-            activeCategory !== null && pill.categoryId === activeCategory;
-          const dimmed =
-            activeCategory !== null && pill.categoryId !== activeCategory;
+        {pills.map((pill, globalIndex) => {
+          const highlighted = activeCategory !== null && pill.categoryId === activeCategory;
+          const dimmed      = activeCategory !== null && pill.categoryId !== activeCategory;
+
+          // Only show colors when a category is selected (highlighted pills only)
+          let color: PillColor | null = null;
+          if (highlighted) {
+            color = getPillHighlightColor(pill.skill);
+          }
 
           return (
             <SkillPillButton
@@ -163,6 +165,7 @@ export function SkillStack({ categories }: { categories: SkillCategory[] }) {
               pill={pill}
               highlighted={highlighted}
               dimmed={dimmed}
+              color={color}
             />
           );
         })}

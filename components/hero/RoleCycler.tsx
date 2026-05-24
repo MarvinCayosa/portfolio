@@ -17,7 +17,7 @@ export function RoleCycler({ className }: { className?: string }) {
   const reduceMotion = useReducedMotion();
   const [index, setIndex] = useState(0);
   const [slotWidth, setSlotWidth] = useState(0);
-  const measureRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLSpanElement>(null);
 
   const current = HERO_ROLE_PREFIXES[index];
 
@@ -92,7 +92,7 @@ export function RoleCycler({ className }: { className?: string }) {
         {HERO_ROLE_PREFIXES.join(", ")} Engineer
       </span>
 
-      <div
+      <span
         ref={measureRef}
         className="pointer-events-none absolute -left-[9999px] top-0 whitespace-nowrap text-lg font-semibold opacity-0 sm:text-xl"
         style={{ lineHeight: LINE_HEIGHT }}
@@ -103,7 +103,7 @@ export function RoleCycler({ className }: { className?: string }) {
             {word}
           </span>
         ))}
-      </div>
+      </span>
     </p>
   );
 }

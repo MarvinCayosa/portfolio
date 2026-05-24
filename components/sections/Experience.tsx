@@ -33,7 +33,7 @@ export function Experience({ experiences }: ExperienceProps) {
     ),
     content: (
       <ul className="list-none space-y-2 pl-0">
-        {exp.bullets.map((bullet) => (
+        {(exp.bullets ?? []).map((bullet) => (
           <li key={bullet} className="flex gap-2 text-[var(--muted)]">
             <span className="text-[var(--foreground)]">—</span>
             {bullet}

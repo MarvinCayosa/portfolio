@@ -71,15 +71,22 @@ export function mergeProjectsWithCatalog(records: ProjectRecord[]): ProjectEntry
       id: fromCatalog?.id ?? slug,
       title: record.title,
       image:
+        record.photos?.[0] ??
         record.image ??
         fromCatalog?.image ??
         PLACEHOLDER(String(record.id)),
-      description: record.description,
-      tags: record.tags,
+      photos: record.photos?.length
+        ? record.photos
+        : fromCatalog?.image
+          ? [fromCatalog.image]
+          : [],
+      description: record.description ?? "",
+      tags: record.tags ?? [],
       website: record.url ?? fromCatalog?.website ?? null,
       github: record.repoUrl ?? fromCatalog?.github ?? null,
-      collaborators:
-        record.collaborators ?? fromCatalog?.collaborators ?? "Solo",
+      collaborators: Array.isArray(record.collaborators)
+        ? record.collaborators.join(", ")
+        : record.collaborators ?? fromCatalog?.collaborators ?? "Solo",
       featured: record.featured,
     };
   });

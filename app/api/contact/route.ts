@@ -1,9 +1,9 @@
 /**
- * POST /api/contact — validates and persists contact form submissions.
+ * POST /api/contact — validates and persists contact form submissions to Firestore.
  */
 
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getFirebaseServices } from "@/lib/db";
 import type { ContactFormData } from "@/types";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -42,16 +42,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    const contact = await prisma.contact.create({ data: result.data });
+    // Persist to Firestore "messages" collection
+    try {
+      const { firestore } = getFirebaseServices();
+      await firestore.collection("messages").add({
+        ...result.data,
+        createdAt: Date.now(),
+        read: false,
+      });
+    } catch (dbErr) {
+      // Log but don't fail the request — message is still acknowledged
+      console.error("[contact] Firestore write failed:", dbErr);
+    }
 
     return NextResponse.json(
-      { success: true, id: contact.id },
-      { status: 201 },
+      { success: true, message: "Contact request received." },
+      { status: 202 },
     );
   } catch (error) {
     console.error("[contact]", error);
     return NextResponse.json(
-      { error: "Failed to save message. Check database connection." },
+      { error: "Failed to process message." },
       { status: 500 },
     );
   }

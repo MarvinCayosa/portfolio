@@ -1,19 +1,62 @@
 /**
- * Prisma client singleton — safe for Next.js hot reload in development.
+ * Firebase Admin singleton — safe for Next.js hot reload in development.
  */
 
-import { PrismaClient } from "@prisma/client";
+import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
+type FirebaseServices = {
+  app: App;
+  firestore: ReturnType<typeof getFirestore>;
+  bucket: ReturnType<typeof getStorage>["bucket"] extends (...args: never[]) => infer T
+    ? T
+    : never;
 };
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-  });
+const globalForFirebase = globalThis as unknown as {
+  firebaseServices: FirebaseServices | undefined;
+};
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+function getRequiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value || !value.trim()) {
+    throw new Error(`Missing required Firebase environment variable: ${name}`);
+  }
+  return value;
+}
+
+export function getFirebaseServices(): FirebaseServices {
+  if (globalForFirebase.firebaseServices) {
+    return globalForFirebase.firebaseServices;
+  }
+
+  const projectId = getRequiredEnv("FIREBASE_PROJECT_ID");
+  const clientEmail = getRequiredEnv("FIREBASE_CLIENT_EMAIL");
+  const privateKey = getRequiredEnv("FIREBASE_PRIVATE_KEY").replace(/\\n/g, "\n");
+  const storageBucket =
+    process.env.FIREBASE_STORAGE_BUCKET?.trim() || `${projectId}.firebasestorage.app`;
+
+  const app =
+    getApps()[0] ??
+    initializeApp({
+      credential: cert({
+        projectId,
+        clientEmail,
+        privateKey,
+      }),
+      storageBucket,
+    });
+
+  const firebaseServices: FirebaseServices = {
+    app,
+    firestore: getFirestore(app),
+    bucket: getStorage(app).bucket(storageBucket),
+  };
+
+  if (process.env.NODE_ENV !== "production") {
+    globalForFirebase.firebaseServices = firebaseServices;
+  }
+
+  return firebaseServices;
 }

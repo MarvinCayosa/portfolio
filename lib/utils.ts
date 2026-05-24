@@ -16,16 +16,22 @@ export function cn(...inputs: ClassValue[]): string {
  * Formats a date range for experience entries.
  */
 export function formatDateRange(
-  start: Date,
-  end: Date | null,
-  current: boolean,
+  start: Date | string,
+  end: Date | string | null | undefined,
+  current: boolean | undefined,
 ): string {
+  const toDate = (value: Date | string): Date =>
+    value instanceof Date ? value : new Date(value);
   const fmt = (d: Date) =>
     d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-  if (current || !end) {
-    return `${fmt(start)} — Present`;
+
+  const startDate = toDate(start);
+  const endDate = end ? toDate(end) : null;
+
+  if (current || !endDate) {
+    return `${fmt(startDate)} — Present`;
   }
-  return `${fmt(start)} — ${fmt(end)}`;
+  return `${fmt(startDate)} — ${fmt(endDate)}`;
 }
 
 /**

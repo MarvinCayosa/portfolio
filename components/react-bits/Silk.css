@@ -1,0 +1,35 @@
+.silk-root {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.silk-layer {
+  position: absolute;
+  inset: -30%;
+  opacity: calc(0.35 + var(--silk-noise) * 0.12);
+  transform: rotate(var(--silk-rotation)) scale(var(--silk-scale));
+  animation: silk-drift var(--silk-duration) ease-in-out infinite alternate;
+}
+
+.silk-layer-a {
+  background:
+    radial-gradient(ellipse 55% 45% at 25% 35%, color-mix(in srgb, var(--silk-color) 70%, transparent), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 75% 65%, color-mix(in srgb, var(--silk-color) 55%, transparent), transparent 72%);
+}
+
+.silk-layer-b {
+  animation-direction: alternate-reverse;
+  animation-duration: calc(var(--silk-duration) * 1.35);
+  background:
+    radial-gradient(ellipse 60% 50% at 60% 25%, color-mix(in srgb, var(--silk-color) 45%, transparent), transparent 68%),
+    radial-gradient(ellipse 45% 55% at 30% 75%, color-mix(in srgb, var(--silk-color) 60%, transparent), transparent 70%);
+}
+
+@keyframes silk-drift {
+  0% {
+    transform: rotate(var(--silk-rotation)) scale(var(--silk-scale)) translate(-4%, -3%);
+  }
+  100% {
+    transform: rotate(var(--silk-rotation)) scale(calc(var(--silk-scale) * 1.08)) translate(4%, 3%);
+  }
+}

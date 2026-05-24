@@ -4,11 +4,13 @@
 
 import type {
   AwardRecord,
+  CertificationRecord,
   EducationRecord,
   ExperienceRecord,
   NavItem,
   ProjectRecord,
   SkillCategory,
+  SectionVisibility,
   SocialLink,
 } from "@/types";
 
@@ -24,6 +26,7 @@ export const SECTION_IDS = {
   SKILLS: "skills",
   EXPERIENCE: "experience",
   PROJECTS: "projects",
+  CERTIFICATIONS: "certifications",
   EDUCATION: "education",
   AWARDS: "awards",
   CONTACT: "contact",
@@ -34,6 +37,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: SECTION_IDS.SKILLS, label: "Skills", icon: "layers" },
   { id: SECTION_IDS.EXPERIENCE, label: "Experience", icon: "briefcase" },
   { id: SECTION_IDS.PROJECTS, label: "Projects", icon: "folder" },
+  { id: SECTION_IDS.CERTIFICATIONS, label: "Certifications", icon: "certificate" },
   { id: SECTION_IDS.EDUCATION, label: "Education", icon: "graduation-cap" },
   { id: SECTION_IDS.AWARDS, label: "Awards", icon: "award" },
   { id: SECTION_IDS.CONTACT, label: "Contact", icon: "mail" },
@@ -110,10 +114,34 @@ export const SECTION_TITLES = {
   skills: "Expertise",
   experience: "Experience",
   projects: "Projects",
+  certifications: "Certifications & Licenses",
   education: "Education",
   awards: "Recognition",
   contact: "Get in Touch",
 } as const;
+
+export const FALLBACK_CERTIFICATIONS: CertificationRecord[] = [
+  {
+    id: "cert-1",
+    title: "Example Certification",
+    issuer: "Acme Institute",
+    date: "2024-01-01",
+    url: null,
+    notes: "Sample certification used as fallback.",
+  },
+];
+
+/** Default section visibility saved under siteConfig/visibility */
+export const DEFAULT_SECTION_VISIBILITY: SectionVisibility = {
+  [SECTION_IDS.HOME]: true,
+  [SECTION_IDS.SKILLS]: true,
+  [SECTION_IDS.EXPERIENCE]: true,
+  [SECTION_IDS.PROJECTS]: true,
+  [SECTION_IDS.CERTIFICATIONS]: true,
+  [SECTION_IDS.EDUCATION]: true,
+  [SECTION_IDS.AWARDS]: true,
+  [SECTION_IDS.CONTACT]: true,
+};
 
 export const SKILL_CATEGORIES: SkillCategory[] = [
   {
@@ -217,7 +245,7 @@ export const COMPANY_TOOLTIPS: Record<string, string> = {
 
 export const FALLBACK_PROJECTS: ProjectRecord[] = [
   {
-    id: 1,
+    id: "1",
     title: "Aurora Dashboard",
     description:
       "A real-time analytics dashboard with glassmorphic UI and sub-second data refresh for enterprise clients.",
@@ -227,7 +255,7 @@ export const FALLBACK_PROJECTS: ProjectRecord[] = [
     featured: true,
   },
   {
-    id: 2,
+    id: "2",
     title: "Verde Commerce",
     description:
       "Sustainable e-commerce platform with carbon-offset checkout and editorial product storytelling.",
@@ -237,7 +265,7 @@ export const FALLBACK_PROJECTS: ProjectRecord[] = [
     featured: false,
   },
   {
-    id: 3,
+    id: "3",
     title: "Haven Journal",
     description:
       "Minimal writing app with offline-first sync, typography-focused reading mode, and end-to-end encryption.",
@@ -247,7 +275,7 @@ export const FALLBACK_PROJECTS: ProjectRecord[] = [
     featured: false,
   },
   {
-    id: 4,
+    id: "4",
     title: "Signal Protocol UI",
     description:
       "Open-source component library for secure messaging interfaces with accessibility-first patterns.",
@@ -260,7 +288,7 @@ export const FALLBACK_PROJECTS: ProjectRecord[] = [
 
 export const FALLBACK_EXPERIENCES: ExperienceRecord[] = [
   {
-    id: 1,
+    id: "1",
     company: "Lumina Labs",
     role: "Senior Product Engineer",
     startDate: new Date("2022-03-01"),
@@ -274,7 +302,7 @@ export const FALLBACK_EXPERIENCES: ExperienceRecord[] = [
     order: 1,
   },
   {
-    id: 2,
+    id: "2",
     company: "Meridian Health",
     role: "Full Stack Developer",
     startDate: new Date("2019-06-01"),
@@ -288,7 +316,7 @@ export const FALLBACK_EXPERIENCES: ExperienceRecord[] = [
     order: 2,
   },
   {
-    id: 3,
+    id: "3",
     company: "Atlas Studio",
     role: "Frontend Developer",
     startDate: new Date("2017-01-01"),
@@ -305,7 +333,7 @@ export const FALLBACK_EXPERIENCES: ExperienceRecord[] = [
 
 export const FALLBACK_EDUCATION: EducationRecord[] = [
   {
-    id: 1,
+    id: "1",
     degree: PRIMARY_EDUCATION.degree,
     institution: PRIMARY_EDUCATION.institution,
     year: 2026,
@@ -314,9 +342,9 @@ export const FALLBACK_EDUCATION: EducationRecord[] = [
 ];
 
 export const FALLBACK_AWARDS: AwardRecord[] = [
-  { id: 1, title: "Webby Award — Best Visual Design", issuer: "The Webby Awards", year: 2023 },
-  { id: 2, title: "Awwwards Site of the Day", issuer: "Awwwards", year: 2022 },
-  { id: 3, title: "Dean's List", issuer: "Stanford University", year: 2016 },
+  { id: "1", title: "Webby Award — Best Visual Design", issuer: "The Webby Awards", year: 2023 },
+  { id: "2", title: "Awwwards Site of the Day", issuer: "Awwwards", year: 2022 },
+  { id: "3", title: "Dean's List", issuer: "Stanford University", year: 2016 },
 ];
 
 export const AWARDS_STAT_LABEL = "awards";

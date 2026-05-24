@@ -1,12 +1,13 @@
 # Portfolio Website
 
-A single-page portfolio built with Next.js (App Router), React 18+, Tailwind CSS v4, Prisma, and PostgreSQL. Designed with an Apple-like aesthetic: generous whitespace, warm neutrals, glass surfaces, and subtle Framer Motion animations.
+A single-page portfolio built with Next.js (App Router), React 18+, Tailwind CSS v4, and Firebase (Firestore + Firebase Storage). Designed with an Apple-like aesthetic: generous whitespace, warm neutrals, glass surfaces, and subtle Framer Motion animations.
 
 ## Stack
 
 - **Frontend:** Next.js, React, Tailwind CSS v4, Framer Motion, Radix UI, Lucide React
-- **Backend:** PostgreSQL via Prisma ORM
-- **Animations:** React Bits–style components (copy-paste implementations in `/components/react-bits`)
+- **Backend data:** Firestore (awards, projects, photos metadata)
+- **Asset storage:** Firebase Storage (project photos)
+- **Animations:** React Bits style components in `/components/react-bits`
 
 ## Getting started
 
@@ -18,18 +19,30 @@ npm install
 
 ### 2. Configure environment
 
-Copy `.env.example` to `.env` and set your values:
+PowerShell:
 
-```bash
-cp .env.example .env
+```powershell
+Copy-Item .env.example .env
 ```
 
-### 3. Database setup
+Then set Firebase Admin credentials in `.env`:
+
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY` (escaped with `\n` for line breaks)
+- `FIREBASE_STORAGE_BUCKET`
+
+Optional:
+
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BASE_URL`
+
+### 3. Seed Firestore
 
 ```bash
-npx prisma migrate dev --name init
-npx prisma db seed
+npm run db:seed
 ```
+
+This seeds only `projects` and `awards` (including project photo paths/URLs).
 
 ### 4. Run development server
 
@@ -46,39 +59,34 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run dev` | Start dev server |
 | `npm run build` | Production build |
 | `npm run start` | Start production server |
-| `npm run db:generate` | Generate Prisma client |
-| `npm run db:migrate` | Run migrations |
-| `npm run db:seed` | Seed sample data |
+| `npm run db:seed` | Seed Firestore sample data |
+
+## Firestore collections
+
+- `projects`
+- `awards`
+
+`experience` and `education` currently use static fallback constants.
 
 ## Project structure
 
 - `/app` — Routes, API handlers, root layout
 - `/components` — UI, sections, layout, animations, react-bits
 - `/hooks` — Scroll spy, parallax, reveal, hide-on-scroll
-- `/lib` — Prisma client, constants, data fetching
-- `/prisma` — Schema and seed
+- `/lib` — Firebase client setup, constants, data fetching
+- `/scripts` — Firestore seed script
 - `/styles` — Global CSS and typography
 - `/types` — Shared TypeScript interfaces
 
 ## API routes
 
-- `POST /api/contact` — Save contact form submissions
+- `POST /api/contact` — Validates and accepts contact form submissions
 - `POST /api/ai` — AI assistant stub (requires `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`)
 
-## Customization
+## Vercel deployment notes
 
-Edit copy and navigation in `lib/constants.ts`. Update seeded content in `prisma/seed.ts`. Set `NEXT_PUBLIC_SITE_NAME` and `NEXT_PUBLIC_SITE_URL` in `.env`.
-
-## React Bits
-
-Official components can be added via jsrepo:
-
-```bash
-npx jsrepo add https://reactbits.dev/ts/tailwind/BlurText
-```
-
-This project includes tailored implementations in `/components/react-bits` matching the design system.
+Add the same Firebase env vars to your Vercel project settings. Do not commit service account secrets.
 
 ## License
 
-Private — customize for your personal portfolio.
+Private - customize for your personal portfolio.
