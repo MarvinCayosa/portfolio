@@ -35,7 +35,7 @@ export function TwoColumnSection({
           </h2>
           <div className="chrome-line mt-5 hidden md:block" aria-hidden />
         </div>
-        <div className="md:col-span-8">{children}</div>
+        <div className="min-w-0 md:col-span-8">{children}</div>
       </div>
     </SectionContainer>
   );

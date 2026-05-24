@@ -6,7 +6,7 @@
 
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SpotlightCard } from "@/components/react-bits/SpotlightCard";
 import { CountUp } from "@/components/react-bits/CountUp";
 import { FadeIn } from "@/components/animations/FadeIn";
@@ -24,9 +24,19 @@ interface AwardsProps {
 }
 
 const SCROLL_STEP = 320;
+const COLUMN_CLASS = "w-[min(72vw,260px)] shrink-0 sm:w-[300px]";
 
 function needsHorizontalScroll(count: number) {
   return count > 2;
+}
+
+/** Pair awards into columns (2 per column) for reliable horizontal scroll on mobile. */
+function awardsToColumns(awards: AwardRecord[]): AwardRecord[][] {
+  const columns: AwardRecord[][] = [];
+  for (let i = 0; i < awards.length; i += 2) {
+    columns.push(awards.slice(i, i + 2));
+  }
+  return columns;
 }
 
 function AwardTitle({ title }: { title: string }) {
@@ -37,7 +47,7 @@ function AwardTitle({ title }: { title: string }) {
       <TooltipPrimitive.Trigger asChild>
         <button
           type="button"
-          className="min-w-0 w-full truncate text-left font-display text-lg text-[var(--foreground)]"
+          className="min-w-0 w-full touch-pan-x truncate text-left font-display text-lg text-[var(--foreground)]"
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
           onClick={() => setOpen((v) => !v)}
@@ -62,15 +72,43 @@ function AwardTitle({ title }: { title: string }) {
   );
 }
 
+function AwardCard({ award, index }: { award: AwardRecord; index: number }) {
+  return (
+    <FadeIn delay={index * 0.05} className="h-full">
+      <SpotlightCard className="flex h-full min-h-[140px] flex-col border border-[var(--border)] bg-[var(--surface)] p-5">
+        <AwardTitle title={award.title} />
+        <p className="mt-1.5 line-clamp-2 min-h-0 flex-1 font-body text-sm text-[var(--muted)]">
+          {award.issuer}
+        </p>
+        <p className="font-label mt-auto pt-3 text-[var(--foreground)]">
+          {formatAwardYears(award.year, award.yearEnd)}
+        </p>
+      </SpotlightCard>
+    </FadeIn>
+  );
+}
+
 function AwardsHorizontalScroller({ awards }: { awards: AwardRecord[] }) {
-  const scrollerRef = useRef<HTMLUListElement>(null);
-  const dragRef = useRef({ active: false, startX: 0, scrollLeft: 0, pointerId: -1 });
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({ active: false, startX: 0, scrollLeft: 0 });
+  const [coarsePointer, setCoarsePointer] = useState(false);
+
+  const columns = useMemo(() => awardsToColumns(awards), [awards]);
 
   const scrollByStep = useCallback((dir: -1 | 1) => {
     scrollerRef.current?.scrollBy({ left: dir * SCROLL_STEP, behavior: "smooth" });
   }, []);
 
   useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    const update = () => setCoarsePointer(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (coarsePointer) return;
     const el = scrollerRef.current;
     if (!el) return;
 
@@ -84,68 +122,73 @@ function AwardsHorizontalScroller({ awards }: { awards: AwardRecord[] }) {
 
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, []);
+  }, [coarsePointer]);
 
-  const onPointerDown = (e: React.PointerEvent<HTMLUListElement>) => {
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (coarsePointer || e.pointerType === "touch") return;
     if (e.button !== 0) return;
     if ((e.target as HTMLElement).closest("button")) return;
     const el = scrollerRef.current;
     if (!el) return;
-    dragRef.current = {
-      active: true,
-      startX: e.clientX,
-      scrollLeft: el.scrollLeft,
-      pointerId: e.pointerId,
-    };
+    dragRef.current = { active: true, startX: e.clientX, scrollLeft: el.scrollLeft };
     el.setPointerCapture(e.pointerId);
     el.style.cursor = "grabbing";
   };
 
-  const onPointerMove = (e: React.PointerEvent<HTMLUListElement>) => {
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragRef.current.active || !scrollerRef.current) return;
     const dx = e.clientX - dragRef.current.startX;
     scrollerRef.current.scrollLeft = dragRef.current.scrollLeft - dx;
   };
 
-  const endDrag = (e: React.PointerEvent<HTMLUListElement>) => {
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragRef.current.active) return;
     dragRef.current.active = false;
     const el = scrollerRef.current;
     if (el) {
-      el.releasePointerCapture(e.pointerId);
+      try {
+        el.releasePointerCapture(e.pointerId);
+      } catch {
+        /* already released */
+      }
       el.style.cursor = "";
     }
   };
 
+  const navBtnClass =
+    "absolute top-1/2 z-20 hidden -translate-y-1/2 p-1 text-[var(--foreground)]/80 transition-opacity hover:text-[var(--foreground)] md:flex";
+
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       <button
         type="button"
         onClick={() => scrollByStep(-1)}
         aria-label="Scroll awards left"
-        className="absolute left-0 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)]/90 text-[var(--foreground)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--surface-elevated)] sm:h-10 sm:w-10"
+        className={cn(navBtnClass, "left-0")}
+        style={{ filter: "drop-shadow(2px 0 8px rgba(0,0,0,0.35))" }}
       >
-        <ChevronLeft className="h-5 w-5" aria-hidden />
+        <ChevronLeft className="h-6 w-6" strokeWidth={2} aria-hidden />
       </button>
       <button
         type="button"
         onClick={() => scrollByStep(1)}
         aria-label="Scroll awards right"
-        className="absolute right-0 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)]/90 text-[var(--foreground)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--surface-elevated)] sm:h-10 sm:w-10"
+        className={cn(navBtnClass, "right-0")}
+        style={{ filter: "drop-shadow(-2px 0 8px rgba(0,0,0,0.35))" }}
       >
-        <ChevronRight className="h-5 w-5" aria-hidden />
+        <ChevronRight className="h-6 w-6" strokeWidth={2} aria-hidden />
       </button>
 
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-[var(--background)] via-[var(--background)]/40 to-transparent sm:w-10 sm:via-[var(--background)]/50"
+        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-5 bg-gradient-to-r from-[var(--background)] via-[var(--background)]/35 to-transparent sm:w-8 sm:via-[var(--background)]/45"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-[var(--background)] via-[var(--background)]/40 to-transparent sm:w-10 sm:via-[var(--background)]/50"
+        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-5 bg-gradient-to-l from-[var(--background)] via-[var(--background)]/35 to-transparent sm:w-8 sm:via-[var(--background)]/45"
         aria-hidden
       />
 
-      <ul
+      <div
         ref={scrollerRef}
         role="region"
         aria-label="Awards list"
@@ -159,29 +202,29 @@ function AwardsHorizontalScroller({ awards }: { awards: AwardRecord[] }) {
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         className={cn(
-          "grid h-[min(320px,42vh)] auto-cols-[min(72vw,260px)] grid-flow-col grid-rows-2 gap-3",
-          "cursor-grab overflow-x-auto overscroll-x-contain pb-2 pl-11 pr-11",
+          "no-scrollbar -mx-1 overflow-x-auto overscroll-x-contain px-1 pb-2",
           "touch-pan-x [-webkit-overflow-scrolling:touch]",
-          "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-          "sm:auto-cols-[300px] sm:gap-4 sm:pl-14 sm:pr-14",
+          !coarsePointer && "cursor-grab md:px-10",
         )}
       >
-        {awards.map((award, i) => (
-          <li key={award.id ?? `${award.title}-${i}`} className="h-full min-w-0">
-            <FadeIn delay={i * 0.05} className="h-full">
-              <SpotlightCard className="flex h-full min-h-[140px] flex-col border border-[var(--border)] bg-[var(--surface)] p-5">
-                <AwardTitle title={award.title} />
-                <p className="mt-1.5 line-clamp-2 min-h-0 flex-1 font-body text-sm text-[var(--muted)]">
-                  {award.issuer}
-                </p>
-                <p className="font-label mt-auto pt-3 text-[var(--foreground)]">
-                  {formatAwardYears(award.year, award.yearEnd)}
-                </p>
-              </SpotlightCard>
-            </FadeIn>
-          </li>
-        ))}
-      </ul>
+        <div className="flex w-max gap-3 sm:gap-4">
+          {columns.map((column, colIndex) => (
+            <div
+              key={column.map((a) => a.id ?? a.title).join("-")}
+              className={cn(COLUMN_CLASS, "flex flex-col gap-3 sm:gap-4")}
+            >
+              {column.map((award, rowIndex) => {
+                const globalIndex = colIndex * 2 + rowIndex;
+                return (
+                  <div key={award.id ?? `${award.title}-${globalIndex}`} className="min-h-[140px]">
+                    <AwardCard award={award} index={globalIndex} />
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -199,27 +242,19 @@ export function Awards({ awards }: AwardsProps) {
         {AWARDS_STAT_LABEL}
       </p>
 
-      {horizontal ? (
-        <AwardsHorizontalScroller awards={awards} />
-      ) : (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-          {awards.map((award, i) => (
-            <li key={award.id ?? `${award.title}-${i}`} className="min-w-0">
-              <FadeIn delay={i * 0.05} className="h-full">
-                <SpotlightCard className="flex h-full min-h-[140px] flex-col border border-[var(--border)] bg-[var(--surface)] p-5">
-                  <AwardTitle title={award.title} />
-                  <p className="mt-1.5 line-clamp-2 min-h-0 flex-1 font-body text-sm text-[var(--muted)]">
-                    {award.issuer}
-                  </p>
-                  <p className="font-label mt-auto pt-3 text-[var(--foreground)]">
-                    {formatAwardYears(award.year, award.yearEnd)}
-                  </p>
-                </SpotlightCard>
-              </FadeIn>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="min-w-0">
+        {horizontal ? (
+          <AwardsHorizontalScroller awards={awards} />
+        ) : (
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+            {awards.map((award, i) => (
+              <li key={award.id ?? `${award.title}-${i}`} className="min-w-0">
+                <AwardCard award={award} index={i} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </TwoColumnSection>
   );
 }
