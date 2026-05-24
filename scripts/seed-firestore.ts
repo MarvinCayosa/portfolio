@@ -132,6 +132,7 @@ async function seedAwards(): Promise<void> {
       title: award.title,
       issuer: award.issuer ?? "",
       year: award.year ?? 0,
+      yearEnd: award.yearEnd ?? null,
       createdAt: Date.now() - i,
     });
   }

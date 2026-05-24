@@ -1,7 +1,5 @@
 /**
- * ProjectShowcase — circular gallery with per-card HTML titles and hover scale.
- *
- * Titles track each card in the carousel animation. Clicking a card opens the detail modal.
+ * ProjectShowcase — circular gallery with WebGL titles on each card.
  */
 
 "use client";
@@ -31,7 +29,6 @@ export function ProjectShowcase({ projects }: ProjectShowcaseProps) {
   const entries = useMemo(() => mergeProjectsWithCatalog(projects), [projects]);
   const [selected, setSelected] = useState<ProjectEntry | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
 
   const galleryItems = useMemo(
     () => entries.map((p) => ({ image: p.image, text: p.title })),
@@ -45,48 +42,34 @@ export function ProjectShowcase({ projects }: ProjectShowcaseProps) {
     setModalOpen(true);
   };
 
+  const itemCount = entries.length;
+  const autoPlaySpeed = itemCount <= 2 ? 0.012 : 0.02;
+
   return (
     <div className="flex w-full flex-col items-center">
       <p className="mt-4 w-full text-center font-label text-[var(--muted)]">
         These are some of the projects I&apos;ve worked on and applied my skills to.
       </p>
 
-      <div className="relative mt-4 w-full max-w-[min(100vw,96rem)] px-0 sm:mt-6">
-        <div className="relative h-[min(44vh,400px)] min-h-[260px] w-full overflow-visible sm:h-[min(52vh,500px)] sm:min-h-[300px] lg:h-[min(58vh,560px)] lg:min-h-[340px]">
-          <div className="h-full w-full overflow-visible pb-10 sm:pb-12">
+      <div className="relative mt-4 w-full max-w-full px-0 sm:mt-6">
+        <div className="relative h-[min(44vh,400px)] min-h-[260px] w-full max-w-full overflow-hidden sm:h-[min(52vh,500px)] sm:min-h-[300px] lg:h-[min(58vh,560px)] lg:min-h-[340px]">
+          <div className="h-full w-full max-w-full overflow-hidden pb-14 sm:pb-16">
             <CircularGallery
               items={galleryItems}
               bend={2}
               htmlLabels
               borderRadius={0.06}
-              scrollEase={0.035}
+              scrollEase={0.07}
               scrollSpeed={1.6}
               autoPlay
-              autoPlaySpeed={0.02}
+              autoPlaySpeed={autoPlaySpeed}
               onSelect={openProject}
-              onActiveChange={setActiveIndex}
             />
           </div>
 
           <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-[var(--background)] via-[var(--background)]/80 to-transparent sm:w-16" aria-hidden />
           <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[var(--background)] via-[var(--background)]/80 to-transparent sm:w-16" aria-hidden />
         </div>
-
-        {entries.length > 1 && (
-          <div className="mt-8 flex justify-center gap-1.5">
-            {entries.map((_, i) => (
-              <span
-                key={i}
-                className="block rounded-full transition-all duration-300"
-                style={{
-                  width: i === activeIndex ? 16 : 5,
-                  height: 5,
-                  background: i === activeIndex ? "var(--foreground)" : "var(--border)",
-                }}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
       <ProjectDetailModal

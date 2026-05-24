@@ -20,6 +20,8 @@ export default async function HomePage() {
       education={data.education}
       awards={data.awards}
       certifications={data.certifications ?? []}
+      gallery={data.gallery ?? []}
+      resumeUrl={data.resumeUrl}
       sectionVisibility={data.sectionVisibility}
     />
   );

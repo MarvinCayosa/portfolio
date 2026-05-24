@@ -118,7 +118,7 @@ function ImageGalleryEditor({
         Project Images
       </span>
       <span style={{ display: "block", fontSize: 11, color: C.muted, marginBottom: 10 }}>
-        Upload images — first image is the cover. Max 5MB per image.
+        Upload images — first image is the cover. Max 4MB per image.
       </span>
 
       {images.length > 0 && (
@@ -445,26 +445,110 @@ export function CertificationForm({ initial, onSave, onCancel, saving }: FormPro
   );
 }
 
-// ─── AwardForm ────────────────────────────────────────────────────────────────
+// ─── GalleryForm ──────────────────────────────────────────────────────────────
 
-export function AwardForm({ initial, onSave, onCancel, saving }: FormProps) {
-  const [title, setTitle]   = useState(String(initial?.title ?? ""));
-  const [issuer, setIssuer] = useState(String(initial?.issuer ?? ""));
-  const [year, setYear]     = useState(String(initial?.year ?? ""));
+export function GalleryForm({ initial, onSave, onCancel, onUploadRequest, saving }: FormProps) {
+  const [image, setImage] = useState(String(initial?.image ?? ""));
+  const [alt, setAlt] = useState(String(initial?.alt ?? ""));
+  const [order, setOrder] = useState(String(initial?.order ?? ""));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave({
-      title, issuer,
-      year: year ? Number(year) : null,
-    }, initial?.id as string | undefined);
+    if (!image) return;
+    await onSave(
+      {
+        image,
+        alt: alt || null,
+        order: order ? Number(order) : undefined,
+      },
+      initial?.id as string | undefined,
+    );
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div>
+        <span style={{ display: "block", fontSize: 11, letterSpacing: "0.07em", textTransform: "uppercase" as const, color: C.muted, marginBottom: 5 }}>
+          Photo
+        </span>
+        <span style={{ display: "block", fontSize: 11, color: C.muted, marginBottom: 8 }}>
+          Upload an image for the dome gallery. Max 4MB.
+        </span>
+        {image && (
+          <img
+            src={image}
+            alt={alt || "Preview"}
+            style={{ display: "block", maxHeight: 120, borderRadius: 8, marginBottom: 10, border: `1px solid ${C.border}` }}
+          />
+        )}
+        {onUploadRequest && (
+          <StudioBtn
+            type="button"
+            variant="ghost"
+            icon={<Upload size={14} />}
+            onClick={() => onUploadRequest((url) => setImage(url))}
+          >
+            Upload image
+          </StudioBtn>
+        )}
+      </div>
+      <StudioInput label="Alt text" value={alt} onChange={(e) => setAlt(e.target.value)} placeholder="Graduation ceremony" />
+      <StudioInput label="Display order" value={order} onChange={(e) => setOrder(e.target.value)} type="number" placeholder="1" hint="Lower numbers appear first in the dome" />
+      <Divider />
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <StudioBtn type="submit" disabled={saving || !image}>{saving ? "Saving…" : initial?.id ? "Update photo" : "Add photo"}</StudioBtn>
+        <StudioBtn type="button" variant="ghost" onClick={onCancel}>Cancel</StudioBtn>
+      </div>
+    </form>
+  );
+}
+
+// ─── AwardForm ────────────────────────────────────────────────────────────────
+
+export function AwardForm({ initial, onSave, onCancel, saving }: FormProps) {
+  const [title, setTitle]       = useState(String(initial?.title ?? ""));
+  const [issuer, setIssuer]     = useState(String(initial?.issuer ?? ""));
+  const [year, setYear]         = useState(String(initial?.year ?? ""));
+  const [yearEnd, setYearEnd]   = useState(
+    initial?.yearEnd != null ? String(initial.yearEnd) : "",
+  );
+  const [yearError, setYearError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const startYear = year ? Number(year) : null;
+    const endYear = yearEnd ? Number(yearEnd) : null;
+    if (startYear != null && endYear != null && endYear < startYear) {
+      setYearError("End year must be the same as or after the start year.");
+      return;
+    }
+    setYearError("");
+    await onSave(
+      {
+        title,
+        issuer,
+        year: startYear,
+        yearEnd: endYear,
+      },
+      initial?.id as string | undefined,
+    );
   };
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <StudioInput label="Award Title *" value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Dean's List" />
       <StudioInput label="Awarded By" value={issuer} onChange={(e) => setIssuer(e.target.value)} placeholder="University of the East" />
-      <StudioInput label="Year" value={year} onChange={(e) => setYear(e.target.value)} type="number" placeholder="2024" />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <StudioInput label="Year *" value={year} onChange={(e) => setYear(e.target.value)} type="number" placeholder="2024" required />
+        <StudioInput label="End year (optional)" value={yearEnd} onChange={(e) => setYearEnd(e.target.value)} type="number" placeholder="2026" />
+      </div>
+      {yearError ? (
+        <p style={{ fontSize: 12, color: "#e57373", margin: 0 }}>{yearError}</p>
+      ) : (
+        <p style={{ fontSize: 11, color: "var(--muted, #888)", margin: 0 }}>
+          Leave end year empty for a single year, or set both for a range (e.g. 2022–2024).
+        </p>
+      )}
       <Divider />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <StudioBtn type="submit" disabled={saving}>{saving ? "Saving…" : initial?.id ? "Update award" : "Add award"}</StudioBtn>

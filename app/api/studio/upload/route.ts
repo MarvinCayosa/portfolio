@@ -14,9 +14,9 @@ export async function POST(request: Request) {
     const file = form.get("file") as File | null;
     if (!file) return NextResponse.json({ error: "Missing file" }, { status: 400 });
 
-    const MAX_SIZE = 5 * 1024 * 1024;
+    const MAX_SIZE = 4 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: "File size exceeds 5MB limit" }, { status: 400 });
+      return NextResponse.json({ error: "File size exceeds 4MB limit" }, { status: 400 });
     }
 
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");

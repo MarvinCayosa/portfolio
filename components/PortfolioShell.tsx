@@ -29,6 +29,7 @@ import { Projects } from "@/components/sections/Projects";
 import { Certifications } from "@/components/sections/Certifications";
 import { Education } from "@/components/sections/Education";
 import { Awards } from "@/components/sections/Awards";
+import { Gallery } from "@/components/sections/Gallery";
 import { Contact } from "@/components/sections/Contact";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 
@@ -46,6 +47,8 @@ export function PortfolioShell({
   education,
   awards,
   certifications = [],
+  gallery = [],
+  resumeUrl,
   sectionVisibility,
 }: PortfolioShellProps) {
   const [showLoader, setShowLoader] = useState(true);
@@ -104,6 +107,9 @@ export function PortfolioShell({
               <Education education={education} />
             )}
             {vis[SECTION_IDS.AWARDS] !== false && <Awards awards={awards} />}
+            {vis[SECTION_IDS.GALLERY] !== false && (
+              <Gallery images={gallery} />
+            )}
             {/* Contact always rendered — it contains the footer */}
             <Contact />
           </PageWrapper>
@@ -117,7 +123,7 @@ export function PortfolioShell({
             lite curve="bezier" exponential opacity={1} zIndex={40}
           />
 
-          <ResumeFab />
+          <ResumeFab resumeUrl={resumeUrl} />
           <BottomNav visibleSections={visibleSections} />
         </TooltipProvider>
       </div>

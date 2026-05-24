@@ -34,6 +34,13 @@ export function formatDateRange(
   return `${fmt(startDate)} — ${fmt(endDate)}`;
 }
 
+/** Formats award year or year range for display. */
+export function formatAwardYears(year?: number, yearEnd?: number | null): string {
+  if (!year) return "";
+  if (yearEnd == null || yearEnd === year) return String(year);
+  return `${year}–${yearEnd}`;
+}
+
 /**
  * Smooth-scrolls to a section by element id.
  */

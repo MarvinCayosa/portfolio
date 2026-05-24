@@ -7,6 +7,7 @@ import type {
   CertificationRecord,
   EducationRecord,
   ExperienceRecord,
+  GalleryImageRecord,
   NavItem,
   ProjectRecord,
   SkillCategory,
@@ -29,6 +30,7 @@ export const SECTION_IDS = {
   CERTIFICATIONS: "certifications",
   EDUCATION: "education",
   AWARDS: "awards",
+  GALLERY: "gallery",
   CONTACT: "contact",
 } as const;
 
@@ -40,6 +42,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: SECTION_IDS.CERTIFICATIONS, label: "Certifications", icon: "certificate" },
   { id: SECTION_IDS.EDUCATION, label: "Education", icon: "graduation-cap" },
   { id: SECTION_IDS.AWARDS, label: "Awards", icon: "award" },
+  { id: SECTION_IDS.GALLERY, label: "Gallery", icon: "images" },
   { id: SECTION_IDS.CONTACT, label: "Contact", icon: "mail" },
 ];
 
@@ -117,8 +120,14 @@ export const SECTION_TITLES = {
   certifications: "Certifications & Licenses",
   education: "Education",
   awards: "Recognition",
+  gallery: "Gallery",
   contact: "Get in Touch",
 } as const;
+
+export const GALLERY_INTRO =
+  "These are some of the pictures of my professional and academic life.";
+
+export const FALLBACK_GALLERY: GalleryImageRecord[] = [];
 
 export const FALLBACK_CERTIFICATIONS: CertificationRecord[] = [
   {
@@ -140,6 +149,7 @@ export const DEFAULT_SECTION_VISIBILITY: SectionVisibility = {
   [SECTION_IDS.CERTIFICATIONS]: true,
   [SECTION_IDS.EDUCATION]: true,
   [SECTION_IDS.AWARDS]: true,
+  [SECTION_IDS.GALLERY]: true,
   [SECTION_IDS.CONTACT]: true,
 };
 

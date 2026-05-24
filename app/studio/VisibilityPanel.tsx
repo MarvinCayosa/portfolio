@@ -22,6 +22,7 @@ const SECTION_LABELS: Record<string, string> = {
   certifications: "Certifications",
   education:      "Education",
   awards:         "Awards",
+  gallery:        "Gallery",
   contact:        "Contact",
 };
 

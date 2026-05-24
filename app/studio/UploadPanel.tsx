@@ -64,10 +64,10 @@ export const UploadPanel = forwardRef<UploadPanelHandle, UploadPanelProps>(
         return;
       }
 
-      // Check file size (5MB limit)
-      const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+      // Check file size (4MB — Vercel server upload body limit is ~4.5MB)
+      const MAX_SIZE = 4 * 1024 * 1024;
       if (file.size > MAX_SIZE) {
-        show("File size exceeds 5MB limit", "err");
+        show("File size exceeds 4MB limit", "err");
         if (fileRef.current) fileRef.current.value = "";
         finishPending();
         return;
@@ -124,8 +124,8 @@ export const UploadPanel = forwardRef<UploadPanelHandle, UploadPanelProps>(
       <>
         <Toast toast={toast} />
         <SectionCard
-          title="Upload to Firebase Storage"
-          subtitle="Images are made public and the URL is copied to your clipboard automatically."
+          title="Upload image"
+          subtitle="Max 4MB. Images are stored on Vercel Blob (or Firebase when configured) and the URL is copied to your clipboard."
         >
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
             <input

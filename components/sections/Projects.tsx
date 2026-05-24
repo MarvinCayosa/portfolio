@@ -20,7 +20,7 @@ export function Projects({ projects }: ProjectsProps) {
       id={SECTION_IDS.PROJECTS}
       className="overflow-x-hidden border-t border-[var(--border)]"
     >
-      <div className="mx-auto flex w-full max-w-[min(100%,96rem)] flex-col items-center px-0 text-center sm:px-2">
+      <div className="mx-auto flex w-full max-w-full flex-col items-center overflow-hidden px-0 text-center sm:max-w-[96rem] sm:px-2">
         <FadeIn>
           <h2 className="font-display heading-section text-[var(--foreground)]">
             {SECTION_TITLES.projects}

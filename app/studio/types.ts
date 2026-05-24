@@ -10,6 +10,7 @@ export type CollectionName =
   | "education"
   | "certifications"
   | "awards"
+  | "gallery"
   | "messages";
 
 /** Metadata for each collection tab */
@@ -28,5 +29,6 @@ export const COLLECTIONS: CollectionMeta[] = [
   { id: "education",      label: "Education",       description: "Academic background" },
   { id: "certifications", label: "Certifications",  description: "Licenses and certifications" },
   { id: "awards",         label: "Awards",          description: "Recognition and achievements" },
+  { id: "gallery",        label: "Gallery",         description: "Dome gallery photos (professional & academic)" },
   { id: "messages",       label: "Messages",        description: "Contact form submissions", readOnly: true },
 ];

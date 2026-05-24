@@ -17,7 +17,9 @@ import {
   EducationForm,
   CertificationForm,
   AwardForm,
+  GalleryForm,
 } from "./forms";
+import { formatAwardYears } from "@/lib/utils";
 import { useCollection, useToast } from "./hooks";
 import type { CollectionName, CollectionMeta } from "./types";
 
@@ -96,6 +98,7 @@ export function CollectionPanel({ meta, password, onUploadRequest }: CollectionP
       case "education":      return <EducationForm {...props} />;
       case "certifications": return <CertificationForm {...props} />;
       case "awards":         return <AwardForm {...props} />;
+      case "gallery":        return <GalleryForm {...props} />;
       default:               return null;
     }
   }
@@ -107,7 +110,9 @@ export function CollectionPanel({ meta, password, onUploadRequest }: CollectionP
       case "experiences":    return `${item.role ?? ""} @ ${item.company ?? ""}`;
       case "education":      return `${item.degree ?? ""} — ${item.institution ?? ""}`;
       case "certifications": return `${item.title ?? ""} · ${item.issuer ?? ""}`;
-      case "awards":         return `${item.title ?? ""} (${item.year ?? ""})`;
+      case "awards":
+        return `${item.title ?? ""} (${formatAwardYears(item.year as number | undefined, item.yearEnd as number | null | undefined)})`;
+      case "gallery":        return String(item.alt ?? "Photo");
       case "messages":       return `From: ${item.name ?? item.email ?? "Unknown"} — ${String(item.message ?? "").slice(0, 60)}`;
       default:               return String(item.id ?? "");
     }
@@ -160,7 +165,10 @@ export function CollectionPanel({ meta, password, onUploadRequest }: CollectionP
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {items.map((item: Record<string, unknown>) => {
-            const imageUrl = meta.id === "projects" && typeof item.image === "string" ? item.image : null;
+            const imageUrl =
+              (meta.id === "projects" || meta.id === "gallery") && typeof item.image === "string"
+                ? item.image
+                : null;
             return (
             <div
               key={String(item.id)}

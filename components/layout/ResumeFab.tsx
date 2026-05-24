@@ -10,14 +10,22 @@ import { RESUME_PATH } from "@/lib/constants";
 import { usePastHero } from "@/hooks/usePastHero";
 import { cn } from "@/lib/utils";
 
-export function ResumeFab() {
+interface ResumeFabProps {
+  resumeUrl?: string | null;
+}
+
+export function ResumeFab({ resumeUrl }: ResumeFabProps) {
   const pastHero = usePastHero();
   const reduceMotion = useReducedMotion();
+  const href = resumeUrl || RESUME_PATH;
+  const isExternal = Boolean(resumeUrl);
 
   return (
     <motion.a
-      href={RESUME_PATH}
-      download
+      href={href}
+      download={isExternal ? undefined : true}
+      target={isExternal ? "_blank" : undefined}
+      rel={isExternal ? "noopener noreferrer" : undefined}
       aria-label="Download resume (PDF)"
       className={cn(
         "group fixed bottom-5 left-3 z-[45] flex h-11 items-center overflow-hidden rounded-full sm:left-5 sm:h-12",

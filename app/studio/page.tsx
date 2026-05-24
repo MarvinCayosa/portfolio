@@ -20,22 +20,25 @@ import { C, StudioBtn, Toast } from "./ui";
 import { CollectionPanel } from "./CollectionPanel";
 import { VisibilityPanel } from "./VisibilityPanel";
 import { HeroPanel } from "./HeroPanel";
+import { ResumePanel } from "./ResumePanel";
 import { UploadPanel, type UploadPanelHandle } from "./UploadPanel";
 import { COLLECTIONS } from "./types";
 import { useToast } from "./hooks";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
-type TabId = "hero" | "visibility" | "projects" | "experiences" | "education" | "certifications" | "awards" | "messages";
+type TabId = "hero" | "resume" | "visibility" | "projects" | "experiences" | "education" | "certifications" | "awards" | "gallery" | "messages";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "hero",           label: "Hero" },
+  { id: "resume",         label: "Resume" },
   { id: "visibility",     label: "Visibility" },
   { id: "projects",       label: "Projects" },
   { id: "experiences",    label: "Experience" },
   { id: "education",      label: "Education" },
   { id: "certifications", label: "Certifications" },
   { id: "awards",         label: "Awards" },
+  { id: "gallery",        label: "Gallery" },
   { id: "messages",       label: "Messages" },
 ];
 
@@ -210,6 +213,8 @@ export default function StudioPage() {
 
         {/* Hero tab */}
         {activeTab === "hero" && <HeroPanel password={password} />}
+
+        {activeTab === "resume" && <ResumePanel password={password} />}
 
         {/* Visibility tab */}
         {activeTab === "visibility" && <VisibilityPanel password={password} />}

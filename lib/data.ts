@@ -14,6 +14,7 @@ import {
   FALLBACK_EDUCATION,
   FALLBACK_EXPERIENCES,
   FALLBACK_PROJECTS,
+  FALLBACK_GALLERY,
   DEFAULT_SECTION_VISIBILITY,
 } from "@/lib/constants";
 import type {
@@ -21,6 +22,7 @@ import type {
   CertificationRecord,
   EducationRecord,
   ExperienceRecord,
+  GalleryImageRecord,
   PortfolioPageData,
   ProjectRecord,
   SectionVisibility,
@@ -68,6 +70,7 @@ type FSAward = {
   title?: string;
   issuer?: string;
   year?: number;
+  yearEnd?: number | null;
 };
 
 type FSCertification = {
@@ -76,6 +79,12 @@ type FSCertification = {
   date?: string | null;
   url?: string | null;
   notes?: string | null;
+};
+
+type FSGallery = {
+  image?: string;
+  alt?: string | null;
+  order?: number;
 };
 
 /** Generic Firestore document wrapper */
@@ -171,13 +180,35 @@ function mapEducation(docs: FSDoc<FSEducation>[]): EducationRecord[] {
 
 function mapAwards(docs: FSDoc<FSAward>[]): AwardRecord[] {
   return docs
-    .map((doc, i) => ({
-      id: doc.id || String(i + 1),
-      title: doc.data().title ?? "Untitled Award",
-      issuer: doc.data().issuer ?? "",
-      year: toNum(doc.data().year, 0),
-    }))
-    .sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
+    .map((doc, i) => {
+      const d = doc.data();
+      const year = toNum(d.year, 0) || undefined;
+      const yearEnd =
+        d.yearEnd != null ? toNum(d.yearEnd, 0) || undefined : undefined;
+      return {
+        id: doc.id || String(i + 1),
+        title: d.title ?? "Untitled Award",
+        issuer: d.issuer ?? "",
+        year,
+        yearEnd: yearEnd ?? null,
+      };
+    })
+    .sort((a, b) => (b.yearEnd ?? b.year ?? 0) - (a.yearEnd ?? a.year ?? 0));
+}
+
+function mapGallery(docs: FSDoc<FSGallery>[]): GalleryImageRecord[] {
+  return docs
+    .map((doc, i) => {
+      const g = doc.data();
+      return {
+        id: doc.id || String(i + 1),
+        image: typeof g.image === "string" ? g.image : "",
+        alt: typeof g.alt === "string" ? g.alt : null,
+        order: toNum(g.order, i),
+      };
+    })
+    .filter((g) => g.image)
+    .sort((a, b) => toNum(a.order, 0) - toNum(b.order, 0));
 }
 
 function mapCertifications(docs: FSDoc<FSCertification>[]): CertificationRecord[] {
@@ -206,14 +237,16 @@ export async function getPortfolioData(): Promise<PortfolioPageData> {
     const { firestore } = getFirebaseServices();
 
     // Fetch all collections in parallel for speed
-    const [projSnap, expSnap, eduSnap, awardSnap, certSnap, visSnap] =
+    const [projSnap, expSnap, eduSnap, awardSnap, certSnap, gallerySnap, visSnap, resumeSnap] =
       await Promise.all([
         firestore.collection("projects").get(),
         firestore.collection("experiences").get(),
         firestore.collection("education").get(),
         firestore.collection("awards").get(),
         firestore.collection("certifications").get(),
+        firestore.collection("gallery").get(),
         firestore.collection("siteConfig").doc("visibility").get(),
+        firestore.collection("siteConfig").doc("resume").get(),
       ]);
 
     // Map each snapshot — fall back to constants when empty
@@ -237,6 +270,10 @@ export async function getPortfolioData(): Promise<PortfolioPageData> {
       ? FALLBACK_CERTIFICATIONS
       : mapCertifications(certSnap.docs as FSDoc<FSCertification>[]);
 
+    const gallery = gallerySnap.empty
+      ? FALLBACK_GALLERY
+      : mapGallery(gallerySnap.docs as FSDoc<FSGallery>[]);
+
     // sectionVisibility — merge stored values with defaults so new sections
     // are always visible until explicitly hidden
     const storedVis = visSnap.exists
@@ -247,7 +284,22 @@ export async function getPortfolioData(): Promise<PortfolioPageData> {
       ...storedVis,
     };
 
-    return { projects, experiences, education, awards, certifications, sectionVisibility };
+    const resumeData = resumeSnap.exists ? resumeSnap.data() : null;
+    const resumeUrl =
+      typeof resumeData?.url === "string" && resumeData.url.length > 0
+        ? resumeData.url
+        : null;
+
+    return {
+      projects,
+      experiences,
+      education,
+      awards,
+      certifications,
+      gallery,
+      resumeUrl,
+      sectionVisibility,
+    };
   } catch {
     // Firebase not configured or unreachable — serve static content
     return {
@@ -256,6 +308,7 @@ export async function getPortfolioData(): Promise<PortfolioPageData> {
       education: FALLBACK_EDUCATION,
       awards: FALLBACK_AWARDS,
       certifications: FALLBACK_CERTIFICATIONS,
+      gallery: FALLBACK_GALLERY,
       sectionVisibility: DEFAULT_SECTION_VISIBILITY,
     };
   }

@@ -13,6 +13,7 @@ import {
   FolderOpen,
   GraduationCap,
   Home,
+  Images,
   Layers,
   Mail,
   Menu,
@@ -33,6 +34,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   certificate: BadgeCheck,
   "graduation-cap": GraduationCap,
   award: Award,
+  images: Images,
   mail: Mail,
 };
 

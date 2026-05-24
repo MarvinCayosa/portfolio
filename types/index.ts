@@ -61,6 +61,8 @@ export interface AwardRecord {
   title: string;
   issuer?: string;
   year?: number;
+  /** Optional end year for ranges (e.g. 2022–2024) */
+  yearEnd?: number | null;
 }
 
 export interface ContactFormData {
@@ -74,6 +76,13 @@ export interface AiRequestBody {
   context: string;
 }
 
+export interface GalleryImageRecord {
+  id?: string;
+  image: string;
+  alt?: string | null;
+  order?: number;
+}
+
 export interface PortfolioPageData {
   projects: ProjectRecord[];
   experiences: ExperienceRecord[];
@@ -81,6 +90,9 @@ export interface PortfolioPageData {
   awards: AwardRecord[];
   skills?: SkillCategory[];
   certifications?: CertificationRecord[];
+  gallery?: GalleryImageRecord[];
+  /** Public URL for resume PDF (Studio upload or static fallback). */
+  resumeUrl?: string | null;
   sectionVisibility?: SectionVisibility;
 }
 

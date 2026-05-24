@@ -12,7 +12,7 @@ interface PageWrapperProps {
 
 export function PageWrapper({ children, className }: PageWrapperProps) {
   return (
-    <main className={cn("relative min-h-dvh pb-20 md:pb-24", className)}>
+    <main className={cn("relative min-h-dvh max-w-full overflow-x-hidden pb-20 md:pb-24", className)}>
       {children}
     </main>
   );

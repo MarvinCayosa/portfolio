@@ -48,7 +48,7 @@ export function Hero() {
       <div className="relative z-10 w-full px-4 pb-24 pt-24 sm:px-8 sm:pb-28 sm:pt-32 lg:px-12">
         <div className="mx-auto max-w-6xl">
           <FadeIn>
-            <h1 className="heading-hero mt-0 flex flex-wrap items-baseline gap-x-4 gap-y-1 leading-[0.95] sm:gap-x-5 md:gap-x-6">
+            <h1 className="heading-hero mt-0 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 leading-[0.95] sm:gap-x-2 md:gap-x-2.5">
               <span className="font-body text-[clamp(2.75rem,9vw,5.5rem)] font-semibold tracking-tight text-[var(--foreground)]">
                 {HERO_COPY.firstName}
               </span>

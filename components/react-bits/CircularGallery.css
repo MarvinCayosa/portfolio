@@ -1,7 +1,8 @@
 .circular-gallery {
   width: 100%;
+  max-width: 100%;
   height: 100%;
-  overflow: visible;
+  overflow: hidden;
   cursor: grab;
   touch-action: pan-y;
 }
@@ -13,20 +14,29 @@
 .circular-gallery canvas {
   display: block;
   width: 100% !important;
+  max-width: 100%;
   height: 100% !important;
+}
+
+.circular-gallery-root {
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .gallery-card-labels {
   z-index: 5;
+  overflow: visible;
+  max-width: 100%;
 }
 
 .gallery-card-label {
   position: absolute;
-  transform-origin: center top;
-  max-width: min(160px, 28vw);
+  transform-origin: center center;
+  max-width: min(42vw, 200px);
+  padding: 0;
   text-align: center;
   font-family: var(--font-playfair), Georgia, serif;
-  font-size: clamp(0.8rem, 2.2vw, 1.05rem);
+  font-size: clamp(0.7rem, 2.8vw, 0.95rem);
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.15;
@@ -34,6 +44,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: opacity 0.12s ease;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 0 12px rgba(0, 0, 0, 0.25);
   pointer-events: none;
+  will-change: transform, opacity;
 }

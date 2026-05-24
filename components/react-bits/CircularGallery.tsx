@@ -23,7 +23,6 @@ export interface GalleryCardLabel {
   index: number;
   x: number;
   y: number;
-  rotation: number;
   opacity: number;
 }
 
@@ -68,17 +67,17 @@ type GalleryLayout = {
 function getGalleryLayout(screenWidth: number, baseBend: number): GalleryLayout {
   if (screenWidth < 480) {
     return {
-      cardWidth: 400,
-      cardHeight: 520,
-      padding: 3.4,
+      cardWidth: 720,
+      cardHeight: 920,
+      padding: 2.15,
       bend: baseBend * 0.42,
     };
   }
   if (screenWidth < 768) {
     return {
-      cardWidth: 500,
-      cardHeight: 640,
-      padding: 3.0,
+      cardWidth: 680,
+      cardHeight: 880,
+      padding: 1.85,
       bend: baseBend * 0.58,
     };
   }
@@ -96,6 +95,44 @@ function getGalleryLayout(screenWidth: number, baseBend: number): GalleryLayout 
     padding: 2.2,
     bend: baseBend,
   };
+}
+
+type BendArc = {
+  R: number;
+  arcY: number;
+  rotationZ: number;
+  sinPhi: number;
+  cosPhi: number;
+};
+
+/** Circular arc position and tangent for a card at horizontal offset x. */
+function getBendArc(x: number, H: number, bend: number): BendArc {
+  if (bend === 0) {
+    return { R: 0, arcY: 0, rotationZ: 0, sinPhi: 0, cosPhi: 1 };
+  }
+
+  const B_abs = Math.abs(bend);
+  const R = (H * H + B_abs * B_abs) / (2 * B_abs);
+  const absX = Math.abs(x);
+  const effectiveX = Math.min(absX, H);
+  let arc = R - Math.sqrt(R * R - effectiveX * effectiveX);
+
+  if (absX > H) {
+    const edgeArc = R - Math.sqrt(R * R - H * H);
+    const denom = Math.sqrt(Math.max(R * R - H * H, 0.0001));
+    const slope = H / denom;
+    arc = edgeArc + (absX - H) * slope * 0.85;
+  }
+
+  const sinPhi = effectiveX / R;
+  const cosPhi = Math.sqrt(Math.max(1 - sinPhi * sinPhi, 0));
+  const rotationZ =
+    bend > 0
+      ? -Math.sign(x) * Math.asin(Math.min(sinPhi, 1))
+      : Math.sign(x) * Math.asin(Math.min(sinPhi, 1));
+  const arcY = bend > 0 ? -arc : arc;
+
+  return { R, arcY, rotationZ, sinPhi, cosPhi };
 }
 
 function autoBind(instance: object) {
@@ -126,13 +163,31 @@ function createTextTexture(
   const metrics = context.measureText(text);
   const textWidth = Math.ceil(metrics.width);
   const textHeight = Math.ceil(parseFontSizePx(font) * 1.25);
-  canvas.width = textWidth + 20;
-  canvas.height = textHeight + 20;
+  const padX = 16;
+  const padY = 10;
+  canvas.width = textWidth + padX * 2;
+  canvas.height = textHeight + padY * 2;
   context.font = font;
-  context.fillStyle = color;
   context.textBaseline = "middle";
   context.textAlign = "center";
   context.clearRect(0, 0, canvas.width, canvas.height);
+  const r = 8;
+  const w = canvas.width;
+  const h = canvas.height;
+  context.fillStyle = "rgba(0,0,0,0.62)";
+  context.beginPath();
+  context.moveTo(r, 0);
+  context.lineTo(w - r, 0);
+  context.quadraticCurveTo(w, 0, w, r);
+  context.lineTo(w, h - r);
+  context.quadraticCurveTo(w, h, w - r, h);
+  context.lineTo(r, h);
+  context.quadraticCurveTo(0, h, 0, h - r);
+  context.lineTo(0, r);
+  context.quadraticCurveTo(0, 0, r, 0);
+  context.closePath();
+  context.fill();
+  context.fillStyle = color;
   context.fillText(text, canvas.width / 2, canvas.height / 2);
   const texture = new Texture(gl, { generateMipmaps: false });
   texture.image = canvas;
@@ -148,6 +203,7 @@ class Title {
   textColor: string;
   font: string;
   mesh!: Mesh;
+  aspect = 1;
 
   constructor(opts: {
     gl: GL;
@@ -174,6 +230,7 @@ class Title {
       this.font,
       this.textColor,
     );
+    this.aspect = width / height;
     const geometry = new Plane(this.gl);
     const program = new Program(this.gl, {
       depthTest: false,
@@ -204,23 +261,20 @@ class Title {
     });
     this.mesh = new Mesh(this.gl, { geometry, program });
     this.mesh.setParent(this.plane);
+    this.plane.renderOrder = 0;
     this.layout();
   }
 
   layout() {
     if (!this.mesh) return;
-    const { texture, width, height } = createTextTexture(
-      this.gl,
-      this.text,
-      this.font,
-      this.textColor,
-    );
-    (this.mesh.program.uniforms.tMap as { value: Texture }).value = texture;
-    const aspect = width / height;
-    const textHeight = Math.max(this.plane.scale.y * 0.11, 0.08);
-    const textWidth = textHeight * aspect;
+    const textHeight = Math.max(this.plane.scale.y * 0.1, 0.08);
+    const textWidth = textHeight * this.aspect;
     this.mesh.scale.set(textWidth, textHeight, 1);
-    this.mesh.position.y = -this.plane.scale.y * 0.5 - textHeight * 0.5 - 0.06;
+    const inset = this.plane.scale.y * 0.06;
+    this.mesh.position.x = 0;
+    this.mesh.position.y = -this.plane.scale.y * 0.5 + textHeight * 0.5 + inset;
+    this.mesh.position.z = 0.06;
+    this.mesh.renderOrder = 20;
   }
 }
 
@@ -374,32 +428,9 @@ class Media {
     const x = this.plane.position.x;
     const H = this.viewport.width / 2;
 
-    if (this.bend === 0) {
-      this.plane.position.y = 0;
-      this.plane.rotation.z = 0;
-    } else {
-      const B_abs = Math.abs(this.bend);
-      const R = (H * H + B_abs * B_abs) / (2 * B_abs);
-      const absX = Math.abs(x);
-      const effectiveX = Math.min(absX, H);
-      let arc = R - Math.sqrt(R * R - effectiveX * effectiveX);
-
-      // Extend arc smoothly past viewport edge so recycled cards don't snap upward.
-      if (absX > H) {
-        const edgeArc = R - Math.sqrt(R * R - H * H);
-        const denom = Math.sqrt(Math.max(R * R - H * H, 0.0001));
-        const slope = H / denom;
-        arc = edgeArc + (absX - H) * slope * 0.85;
-      }
-
-      if (this.bend > 0) {
-        this.plane.position.y = -arc;
-        this.plane.rotation.z = -Math.sign(x) * Math.asin(Math.min(effectiveX / R, 1));
-      } else {
-        this.plane.position.y = arc;
-        this.plane.rotation.z = Math.sign(x) * Math.asin(Math.min(effectiveX / R, 1));
-      }
-    }
+    const arc = getBendArc(x, H, this.bend);
+    this.plane.position.y = arc.arcY;
+    this.plane.rotation.z = arc.rotationZ;
 
     const planeOffset = this.plane.scale.x / 2;
     const viewportOffset = this.viewport.width / 2;
@@ -421,6 +452,7 @@ class Media {
     this.scaleMultiplier = lerp(this.scaleMultiplier, targetScale, 0.14);
     this.plane.scale.x = this.baseScaleX * this.scaleMultiplier;
     this.plane.scale.y = this.baseScaleY * this.scaleMultiplier;
+    if (this.showWebGLTitle) this.title?.layout();
   }
 
   onResize(opts: {
@@ -467,7 +499,9 @@ class GalleryApp {
   raf = 0;
   isDown = false;
   start = 0;
+  startY = 0;
   isPaused = false;
+  offscreenPaused = false;
   autoPlay: boolean;
   autoPlaySpeed: number;
   onSelect?: (index: number) => void;
@@ -480,13 +514,15 @@ class GalleryApp {
   _lastEmittedActive = -1;
   mouseX = -1;
   mouseY = -1;
+  pointerX = -1;
+  pointerY = -1;
 
   boundOnResize!: () => void;
   boundOnMouseMove!: (e: MouseEvent) => void;
   boundOnWheel!: (e: WheelEvent) => void;
   boundOnTouchDown!: (e: MouseEvent | TouchEvent) => void;
   boundOnTouchMove!: (e: MouseEvent | TouchEvent) => void;
-  boundOnTouchUp!: () => void;
+  boundOnTouchUp!: (e: MouseEvent | TouchEvent) => void;
 
   constructor(
     container: HTMLElement,
@@ -535,10 +571,11 @@ class GalleryApp {
   }
 
   createRenderer() {
+    const isNarrow = typeof window !== "undefined" && window.innerWidth < 768;
     this.renderer = new Renderer({
       alpha: true,
-      antialias: true,
-      dpr: Math.min(window.devicePixelRatio || 1, 2),
+      antialias: !isNarrow,
+      dpr: Math.min(window.devicePixelRatio || 1, isNarrow ? 1.5 : 2),
     });
     this.gl = this.renderer.gl;
     this.gl.clearColor(0, 0, 0, 0);
@@ -574,7 +611,9 @@ class GalleryApp {
     ];
     const galleryItems = items?.length ? items : defaults;
     this.uniqueCount = galleryItems.length;
-    this.mediasImages = galleryItems.concat(galleryItems);
+    const copies =
+      galleryItems.length <= 1 ? 1 : galleryItems.length <= 2 ? 4 : galleryItems.length <= 3 ? 3 : 2;
+    this.mediasImages = Array.from({ length: copies }, () => galleryItems).flat();
     this.medias = this.mediasImages.map((data, index) => {
       return new Media({
         geometry: this.planeGeometry,
@@ -608,28 +647,30 @@ class GalleryApp {
     for (let i = 0; i < this.medias.length; i++) {
       const media = this.medias[i];
       const worldX = media.plane.position.x;
-      if (Math.abs(worldX) > vw * 0.92) continue;
+      if (Math.abs(worldX) > vw * 0.95) continue;
 
-      const worldY = media.plane.position.y;
-      const screenX = w / 2 + (worldX / (vw * 0.5)) * (w * 0.5);
-      const screenY = h / 2 - (worldY / (vh * 0.5)) * (h * 0.5);
-      const cardH = ((media.baseScaleY * media.scaleMultiplier) / vh) * h;
-      const halfH = cardH * 0.5;
-      const rot = -media.plane.rotation.z;
-      const opacity = Math.max(0, 1 - Math.abs(worldX) / (vw * 0.62));
-      const anchorX = screenX + Math.sin(rot) * halfH;
-      const anchorY = screenY + Math.cos(rot) * halfH + 8;
+      const logical = i % this.uniqueCount;
+      const H = vw / 2;
+      const arc = getBendArc(worldX, H, media.bend);
+      const gap = media.plane.scale.y * 0.5 + vh * 0.06;
+      const signX = Math.sign(worldX) || 1;
+      const labelWorldX = worldX + signX * arc.sinPhi * gap;
+      const labelWorldY =
+        media.bend >= 0
+          ? media.plane.position.y - arc.cosPhi * gap
+          : media.plane.position.y + arc.cosPhi * gap;
+      const screenX = w / 2 + (labelWorldX / (vw * 0.5)) * (w * 0.5);
+      const screenY = h / 2 - (labelWorldY / (vh * 0.5)) * (h * 0.5);
+      const opacity = Math.max(0.3, 1 - Math.abs(worldX) / (vw * 0.72));
 
       labels.push({
         key: i,
-        index: i % this.uniqueCount,
-        x: anchorX,
-        y: anchorY,
-        rotation: rot,
+        index: logical,
+        x: screenX,
+        y: screenY,
         opacity,
       });
     }
-
     this.onLabelPositions(labels);
   }
 
@@ -657,10 +698,10 @@ class GalleryApp {
       const worldY = media.plane.position.y;
       const screenX = rect.width / 2 + (worldX / (vw * 0.5)) * (rect.width * 0.5);
       const screenY = rect.height / 2 - (worldY / (vh * 0.5)) * (rect.height * 0.5);
-      const cardW = (media.baseScaleX / vw) * rect.width;
-      const cardH = (media.baseScaleY / vh) * rect.height;
+      const cardW = (media.plane.scale.x / vw) * rect.width;
+      const cardH = (media.plane.scale.y / vh) * rect.height;
 
-      if (Math.abs(mx - screenX) < cardW * 0.52 && Math.abs(my - screenY) < cardH * 0.58) {
+      if (Math.abs(mx - screenX) < cardW * 0.55 && Math.abs(my - screenY) < cardH * 0.62) {
         const dist = Math.hypot(mx - screenX, my - screenY);
         if (dist < closestDist) {
           closestDist = dist;
@@ -672,32 +713,60 @@ class GalleryApp {
     return closest;
   }
 
-  emitSelect() {
+  emitSelectAt(clientX: number, clientY: number) {
+    const media = this.findHoveredMedia(clientX, clientY);
+    if (media) {
+      this.onSelect?.(media.index % this.uniqueCount);
+      return;
+    }
     this.onSelect?.(this.getActiveIndex());
   }
 
   onTouchDown(e: MouseEvent | TouchEvent) {
     this.isDown = true;
     this.scroll.position = this.scroll.current;
-    this.start = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const x = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const y = "touches" in e ? e.touches[0].clientY : e.clientY;
+    this.start = x;
+    this.startY = y;
+    this.pointerX = x;
+    this.pointerY = y;
     this.dragDistance = 0;
   }
 
   onTouchMove(e: MouseEvent | TouchEvent) {
     if (!this.isDown) return;
     const x = "touches" in e ? e.touches[0].clientX : e.clientX;
-    this.dragDistance = Math.max(this.dragDistance, Math.abs(this.start - x));
+    const y = "touches" in e ? e.touches[0].clientY : e.clientY;
+    const dx = Math.abs(this.start - x);
+    const dy = Math.abs(this.startY - y);
+    if ("touches" in e && dy > dx && dy > 14) {
+      this.isDown = false;
+      return;
+    }
+    this.dragDistance = Math.max(this.dragDistance, dx);
     const distance = (this.start - x) * (this.scrollSpeed * 0.025);
     this.scroll.target = this.scroll.position + distance;
   }
 
-  onTouchUp() {
+  onTouchUp(e?: MouseEvent | TouchEvent) {
     if (!this.isDown) return;
-    const shouldSelect = this.dragDistance < 8;
+    const shouldSelect = this.dragDistance < 10;
+    if (e) {
+      if ("changedTouches" in e && e.changedTouches[0]) {
+        this.pointerX = e.changedTouches[0].clientX;
+        this.pointerY = e.changedTouches[0].clientY;
+      } else if ("clientX" in e) {
+        this.pointerX = e.clientX;
+        this.pointerY = e.clientY;
+      }
+    }
     this.isDown = false;
     this.dragDistance = 0;
     this.onCheck();
-    if (shouldSelect) this.emitSelect();
+    if (shouldSelect && this.pointerX >= 0) {
+      this.emitSelectAt(this.pointerX, this.pointerY);
+    }
   }
 
   onWheel(e: WheelEvent) {
@@ -737,7 +806,7 @@ class GalleryApp {
   }
 
   update() {
-    if (this.autoPlay && !this.isPaused && !this.isDown) {
+    if (this.autoPlay && !this.isPaused && !this.offscreenPaused && !this.isDown) {
       this.scroll.target -= this.autoPlaySpeed;
     }
     this.scroll.current = lerp(this.scroll.current, this.scroll.target, this.scroll.ease);
@@ -756,7 +825,7 @@ class GalleryApp {
         ? "pointer"
         : "grab";
     this.renderer.render({ scene: this.scene, camera: this.camera });
-    this.emitLabelPositions();
+    if (this.htmlLabels) this.emitLabelPositions();
     this.scroll.last = this.scroll.current;
 
     // Emit active index change whenever the centered card changes
@@ -782,7 +851,7 @@ class GalleryApp {
     window.addEventListener("mouseup", this.boundOnTouchUp);
     this.container.addEventListener("touchstart", this.boundOnTouchDown, { passive: true });
     this.container.addEventListener("touchmove", this.boundOnTouchMove, { passive: true });
-    this.container.addEventListener("touchend", this.onTouchUp);
+    this.container.addEventListener("touchend", this.boundOnTouchUp);
     this.boundOnMouseMove = (e: MouseEvent) => {
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
@@ -809,7 +878,7 @@ class GalleryApp {
     window.removeEventListener("mouseup", this.boundOnTouchUp);
     this.container.removeEventListener("touchstart", this.boundOnTouchDown);
     this.container.removeEventListener("touchmove", this.boundOnTouchMove);
-    this.container.removeEventListener("touchend", this.onTouchUp);
+    this.container.removeEventListener("touchend", this.boundOnTouchUp);
     this.container.removeEventListener("mousemove", this.boundOnMouseMove);
     if (this.renderer?.gl?.canvas?.parentNode) {
       this.renderer.gl.canvas.parentNode.removeChild(this.renderer.gl.canvas);
@@ -867,9 +936,10 @@ export function CircularGallery({
         node.textContent = title;
         node.style.left = `${label.x}px`;
         node.style.top = `${label.y}px`;
-        node.style.transform = `translate(-50%, 0) rotate(${label.rotation}rad)`;
+        node.style.transform = "translate(-50%, -50%)";
+        node.style.transformOrigin = "center center";
         node.style.opacity = String(label.opacity);
-        node.style.visibility = label.opacity < 0.08 ? "hidden" : "visible";
+        node.style.visibility = label.opacity < 0.2 ? "hidden" : "visible";
       });
     };
 
@@ -888,7 +958,22 @@ export function CircularGallery({
       htmlLabels,
       onLabelPositions: htmlLabels ? syncLabels : undefined,
     });
+
+    const root = rootRef.current;
+    const io =
+      root &&
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            ([entry]) => {
+              app.offscreenPaused = !entry.isIntersecting;
+            },
+            { root: null, threshold: 0.08 },
+          )
+        : null;
+    if (io && root) io.observe(root);
+
     return () => {
+      io?.disconnect();
       app.destroy();
       labelPoolRef.current.forEach((node) => node.remove());
       labelPoolRef.current = [];
@@ -896,10 +981,13 @@ export function CircularGallery({
   }, [items, bend, textColor, borderRadius, scrollSpeed, scrollEase, autoPlay, autoPlaySpeed, onSelect, onActiveChange, font, htmlLabels]);
 
   return (
-    <div ref={rootRef} className={`circular-gallery-root relative h-full w-full ${className}`}>
+    <div
+      ref={rootRef}
+      className={`circular-gallery-root relative h-full w-full max-w-full overflow-hidden ${className}`}
+    >
       <div
         ref={containerRef}
-        className="circular-gallery h-full w-full"
+        className="circular-gallery h-full w-full max-w-full"
         role="region"
         aria-label="Project gallery"
       />

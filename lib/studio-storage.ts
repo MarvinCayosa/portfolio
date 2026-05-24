@@ -8,6 +8,26 @@ import { resolveStorageBucketName, storagePublicUrl } from "@/lib/firebase-bucke
 
 function formatUploadError(err: unknown): string {
   const message = err instanceof Error ? err.message : String(err);
+  const lower = message.toLowerCase();
+
+  if (
+    lower.includes("payload too large") ||
+    lower.includes("request entity too large") ||
+    lower.includes("body exceeded") ||
+    lower.includes("413")
+  ) {
+    return "File is too large for server upload (max 4MB). Try a smaller image or compress it.";
+  }
+  if (
+    lower.includes("blob_read_write_token") ||
+    lower.includes("no token found") ||
+    lower.includes("access denied") && lower.includes("blob")
+  ) {
+    return "Vercel Blob is not configured. Link a Blob store in the Vercel dashboard and set BLOB_READ_WRITE_TOKEN for this environment.";
+  }
+  if (lower.includes("unauthorized") && lower.includes("blob")) {
+    return "Invalid Vercel Blob token. Re-link the Blob store or run `vercel env pull` for local development.";
+  }
   if (message.includes("bucket does not exist")) {
     return "Storage bucket not found. Enable Firebase Storage in the Firebase console, or add a Vercel Blob store (BLOB_READ_WRITE_TOKEN).";
   }
@@ -64,8 +84,8 @@ async function uploadToFirebase(
   return { url, bucket: bucketName, path: destination };
 }
 
-/** Upload a studio image; prefers Vercel Blob when BLOB_READ_WRITE_TOKEN is set. */
-export async function uploadStudioImage(
+/** Upload a studio asset; prefers Vercel Blob when BLOB_READ_WRITE_TOKEN is set. */
+export async function uploadStudioFile(
   buffer: Buffer,
   filename: string,
   contentType: string,
@@ -78,6 +98,15 @@ export async function uploadStudioImage(
   } catch (err) {
     throw new Error(formatUploadError(err));
   }
+}
+
+/** Upload a studio image; prefers Vercel Blob when BLOB_READ_WRITE_TOKEN is set. */
+export async function uploadStudioImage(
+  buffer: Buffer,
+  filename: string,
+  contentType: string,
+): Promise<{ url: string; bucket: string; path: string }> {
+  return uploadStudioFile(buffer, filename, contentType);
 }
 
 /** Verify Firebase bucket exists before attempting Firebase-only upload. */
