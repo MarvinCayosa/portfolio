@@ -5,8 +5,10 @@
   --radius: 520px;
   --viewer-pad: 72px;
   --circ: calc(var(--radius) * 3.14);
-  --rot-y: calc((360deg / var(--segments-x)) / 2);
-  --rot-x: calc((360deg / var(--segments-y)) / 2);
+  --curvature: 1;
+  --perspective-factor: 2;
+  --rot-y: calc((360deg / var(--segments-x)) / 2 * var(--curvature));
+  --rot-x: calc((360deg / var(--segments-y)) / 2 * var(--curvature));
   --item-width: calc(var(--circ) / var(--segments-x));
   --item-height: calc(var(--circ) / var(--segments-y));
 }
@@ -38,7 +40,7 @@ main.sphere-main {
   height: 100%;
   display: grid;
   place-items: center;
-  perspective: calc(var(--radius) * 2);
+  perspective: calc(var(--radius) * var(--perspective-factor));
   perspective-origin: 50% 50%;
   contain: layout paint size;
 }
@@ -58,7 +60,7 @@ main.sphere-main {
 }
 
 .overlay {
-  background-image: radial-gradient(rgba(235, 235, 235, 0) 65%, var(--overlay-blur-color, #120f17) 100%);
+  background-image: radial-gradient(rgba(235, 235, 235, 0) 58%, var(--overlay-blur-color, #120f17) 100%);
 }
 
 .overlay--blur {
@@ -192,6 +194,36 @@ main.sphere-main {
 
 .edge-fade--bottom {
   bottom: 0;
+}
+
+.edge-fade--left,
+.edge-fade--right {
+  top: 0;
+  bottom: 0;
+  width: min(22vw, 180px);
+  height: auto;
+  z-index: 4;
+}
+
+.edge-fade--left {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    var(--overlay-blur-color, #120f17) 0%,
+    color-mix(in srgb, var(--overlay-blur-color, #120f17) 55%, transparent) 45%,
+    transparent 100%
+  );
+}
+
+.edge-fade--right {
+  right: 0;
+  left: auto;
+  background: linear-gradient(
+    to left,
+    var(--overlay-blur-color, #120f17) 0%,
+    color-mix(in srgb, var(--overlay-blur-color, #120f17) 55%, transparent) 45%,
+    transparent 100%
+  );
 }
 
 body.dg-scroll-lock {

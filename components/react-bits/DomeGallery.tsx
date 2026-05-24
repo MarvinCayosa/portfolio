@@ -22,6 +22,10 @@ type DomeGalleryProps = {
   imageBorderRadius?: string;
   openedImageBorderRadius?: string;
   grayscale?: boolean;
+  /** Multiplier on tile rotation; lower = flatter dome (default 1) */
+  curvature?: number;
+  /** Perspective distance as radius × factor; higher = flatter look */
+  perspectiveFactor?: number;
 };
 
 type ItemDef = {
@@ -156,7 +160,9 @@ export default function DomeGallery({
   openedImageHeight = '400px',
   imageBorderRadius = '30px',
   openedImageBorderRadius = '30px',
-  grayscale = true
+  grayscale = true,
+  curvature = 1,
+  perspectiveFactor = 2,
 }: DomeGalleryProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
@@ -704,7 +710,9 @@ export default function DomeGallery({
           ['--overlay-blur-color' as any]: overlayBlurColor,
           ['--tile-radius' as any]: imageBorderRadius,
           ['--enlarge-radius' as any]: openedImageBorderRadius,
-          ['--image-filter' as any]: grayscale ? 'grayscale(1)' : 'none'
+          ['--image-filter' as any]: grayscale ? 'grayscale(1)' : 'none',
+          ['--curvature' as any]: curvature,
+          ['--perspective-factor' as any]: perspectiveFactor,
         } as React.CSSProperties
       }
     >
@@ -746,6 +754,8 @@ export default function DomeGallery({
 
         <div className="overlay" />
         <div className="overlay overlay--blur" />
+        <div className="edge-fade edge-fade--left" aria-hidden />
+        <div className="edge-fade edge-fade--right" aria-hidden />
         <div className="edge-fade edge-fade--top" />
         <div className="edge-fade edge-fade--bottom" />
 
