@@ -408,8 +408,8 @@ export function EducationForm({ initial, onSave, onCancel, saving }: FormProps) 
         <StudioInput label="Display Order" value={order} onChange={(e) => setOrder(e.target.value)} type="number" placeholder="1" />
       </div>
       <StringListEditor
-        label="Highlights"
-        hint="Key coursework, honors, or activities"
+        label="Bullet Points"
+        hint="Key achievements or responsibilities"
         items={bullets}
         onChange={setBullets}
         placeholder="e.g. Magna Cum Laude, 2022–2026"

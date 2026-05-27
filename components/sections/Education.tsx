@@ -24,11 +24,12 @@ function EducationCard({ record }: { record: EducationRecord }) {
   const [open, setOpen] = useState(false);
   const reduceMotion = useReducedMotion();
 
+  const legacyNotes = record.notes
+    ? record.notes.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+    : [];
   const details = Array.isArray(record.bullets) && record.bullets.length
     ? record.bullets
-    : record.notes
-      ? [record.notes]
-      : [];
+    : legacyNotes;
   const hasDetails = details.length > 0;
 
   return (
@@ -83,12 +84,13 @@ function EducationCard({ record }: { record: EducationRecord }) {
             }}
             className="overflow-hidden"
           >
-            <ul className="space-y-2 border-t border-[var(--border)] px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+            <ul className="list-none space-y-2 border-t border-[var(--border)] px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
               {details.map((line) => (
                 <li
                   key={line}
-                  className="font-body text-sm leading-relaxed text-[var(--muted)]"
+                  className="flex gap-2 font-body text-sm leading-relaxed text-[var(--muted)]"
                 >
+                  <span className="text-[var(--foreground)]">—</span>
                   {line}
                 </li>
               ))}
