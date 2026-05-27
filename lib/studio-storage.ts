@@ -50,7 +50,7 @@ async function uploadToVercelBlob(
     access: "public",
     contentType: contentType || "application/octet-stream",
     addRandomSuffix: false,
-    cacheControl: STUDIO_IMAGE_CACHE_CONTROL,
+    cacheControlMaxAge: 31536000,
   });
   return { url: blob.url, bucket: "vercel-blob", path };
 }
