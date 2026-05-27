@@ -54,7 +54,9 @@ export interface EducationRecord {
   degree: string;
   institution: string;
   year?: number;
+  bullets?: string[];
   notes?: string | null;
+  order?: number;
 }
 
 export interface AwardRecord {

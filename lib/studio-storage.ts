@@ -6,6 +6,8 @@ import { randomUUID } from "crypto";
 import { getFirebaseServices } from "@/lib/db";
 import { resolveStorageBucketName, storagePublicUrl } from "@/lib/firebase-bucket";
 
+const STUDIO_IMAGE_CACHE_CONTROL = "public, max-age=31536000, immutable";
+
 function formatUploadError(err: unknown): string {
   const message = err instanceof Error ? err.message : String(err);
   const lower = message.toLowerCase();
@@ -48,6 +50,7 @@ async function uploadToVercelBlob(
     access: "public",
     contentType: contentType || "application/octet-stream",
     addRandomSuffix: false,
+    cacheControl: STUDIO_IMAGE_CACHE_CONTROL,
   });
   return { url: blob.url, bucket: "vercel-blob", path };
 }
@@ -66,6 +69,7 @@ async function uploadToFirebase(
   await fileRef.save(buffer, {
     metadata: {
       contentType: contentType || "application/octet-stream",
+      cacheControl: STUDIO_IMAGE_CACHE_CONTROL,
       metadata: {
         firebaseStorageDownloadTokens: downloadToken,
       },

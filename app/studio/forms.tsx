@@ -380,7 +380,13 @@ export function EducationForm({ initial, onSave, onCancel, saving }: FormProps) 
   const [degree, setDegree]           = useState(String(initial?.degree ?? ""));
   const [institution, setInstitution] = useState(String(initial?.institution ?? ""));
   const [year, setYear]               = useState(String(initial?.year ?? ""));
-  const [notes, setNotes]             = useState(String(initial?.notes ?? ""));
+  const [bullets, setBullets]         = useState<string[]>(
+    Array.isArray(initial?.bullets)
+      ? (initial?.bullets as string[])
+      : initial?.notes
+        ? [String(initial.notes)]
+        : [],
+  );
   const [order, setOrder]             = useState(String(initial?.order ?? ""));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -388,7 +394,7 @@ export function EducationForm({ initial, onSave, onCancel, saving }: FormProps) 
     await onSave({
       degree, institution,
       year: year ? Number(year) : null,
-      notes: notes || null,
+      bullets: bullets.filter(Boolean),
       order: order ? Number(order) : undefined,
     }, initial?.id as string | undefined);
   };
@@ -401,7 +407,13 @@ export function EducationForm({ initial, onSave, onCancel, saving }: FormProps) 
         <StudioInput label="Graduation Year" value={year} onChange={(e) => setYear(e.target.value)} type="number" placeholder="2026" />
         <StudioInput label="Display Order" value={order} onChange={(e) => setOrder(e.target.value)} type="number" placeholder="1" />
       </div>
-      <StudioTextarea label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="e.g. Magna Cum Laude, 2022–2026" />
+      <StringListEditor
+        label="Highlights"
+        hint="Key coursework, honors, or activities"
+        items={bullets}
+        onChange={setBullets}
+        placeholder="e.g. Magna Cum Laude, 2022–2026"
+      />
       <Divider />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <StudioBtn type="submit" disabled={saving}>{saving ? "Saving…" : initial?.id ? "Update education" : "Add education"}</StudioBtn>

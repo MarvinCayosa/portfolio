@@ -24,7 +24,11 @@ function EducationCard({ record }: { record: EducationRecord }) {
   const [open, setOpen] = useState(false);
   const reduceMotion = useReducedMotion();
 
-  const details = record.notes ? [record.notes] : [];
+  const details = Array.isArray(record.bullets) && record.bullets.length
+    ? record.bullets
+    : record.notes
+      ? [record.notes]
+      : [];
   const hasDetails = details.length > 0;
 
   return (

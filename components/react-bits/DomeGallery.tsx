@@ -469,6 +469,8 @@ export default function DomeGallery({
     const rawSrc = parent.dataset.src || (el.querySelector('img') as HTMLImageElement)?.src || '';
     const img = document.createElement('img');
     img.src = rawSrc;
+    img.loading = 'eager';
+    img.decoding = 'async';
     overlay.appendChild(img);
     viewerRef.current!.appendChild(overlay);
 
@@ -737,7 +739,7 @@ export default function DomeGallery({
                   onClick={onTileClick}
                   onPointerUp={onTilePointerUp}
                 >
-                  <img src={it.src} draggable={false} alt={it.alt} />
+                  <img src={it.src} draggable={false} alt={it.alt} loading="eager" decoding="async" />
                 </div>
               </div>
             ))}

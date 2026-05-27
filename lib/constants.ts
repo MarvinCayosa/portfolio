@@ -117,7 +117,7 @@ export const SECTION_TITLES = {
   skills: "Expertise",
   experience: "Experience",
   projects: "Projects",
-  certifications: "Certifications & Licenses",
+  certifications: "Certifications and Licenses",
   education: "Education",
   awards: "Recognition",
   gallery: "Gallery",
@@ -347,7 +347,7 @@ export const FALLBACK_EDUCATION: EducationRecord[] = [
     degree: PRIMARY_EDUCATION.degree,
     institution: PRIMARY_EDUCATION.institution,
     year: 2026,
-    notes: PRIMARY_EDUCATION.period,
+    bullets: [PRIMARY_EDUCATION.period, ...PRIMARY_EDUCATION.details],
   },
 ];
 

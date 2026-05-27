@@ -64,6 +64,7 @@ type FSEducation = {
   degree?: string;
   institution?: string;
   year?: number;
+  bullets?: unknown[];
   notes?: string | null;
   order?: number;
 };
@@ -182,12 +183,16 @@ function mapEducation(docs: FSDoc<FSEducation>[]): EducationRecord[] {
   return docs
     .map((doc, i) => {
       const e = doc.data();
+      const legacyNotes = typeof e.notes === "string" ? e.notes : null;
+      const bulletItems = toStrings(e.bullets);
+      const bullets = bulletItems.length ? bulletItems : legacyNotes ? [legacyNotes] : [];
       return {
         id: doc.id || String(i + 1),
         degree: e.degree ?? "Unknown Degree",
         institution: e.institution ?? "Unknown Institution",
         year: toNum(e.year, 0) || undefined,
-        notes: typeof e.notes === "string" ? e.notes : null,
+        bullets: bullets.length ? bullets : undefined,
+        notes: legacyNotes,
         order: toNum(e.order, i),
       };
     })
