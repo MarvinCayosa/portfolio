@@ -43,7 +43,7 @@ export function ProjectShowcase({ projects }: ProjectShowcaseProps) {
   };
 
   const itemCount = entries.length;
-  const autoPlaySpeed = itemCount <= 2 ? 0.012 : 0.02;
+  const autoPlaySpeed = itemCount <= 2 ? 0.008 : 0.013;
 
   return (
     <div className="flex w-full flex-col items-center">
@@ -57,7 +57,7 @@ export function ProjectShowcase({ projects }: ProjectShowcaseProps) {
             <CircularGallery
               items={galleryItems}
               bend={2}
-              htmlLabels
+              htmlLabels={false}
               borderRadius={0.06}
               scrollEase={0.07}
               scrollSpeed={1.6}
