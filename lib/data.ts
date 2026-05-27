@@ -41,6 +41,7 @@ type FSProject = {
   tags?: unknown[];
   url?: string | null;
   repoUrl?: string | null;
+  avpVideoUrl?: string | null;
   featured?: boolean;
   collaborators?: string | null;
   image?: string | null;
@@ -143,6 +144,7 @@ function mapProjects(docs: FSDoc<FSProject>[]): ProjectRecord[] {
         tags: toStrings(p.tags),
         url: typeof p.url === "string" ? p.url : null,
         repoUrl: typeof p.repoUrl === "string" ? p.repoUrl : null,
+        avpVideoUrl: typeof p.avpVideoUrl === "string" ? p.avpVideoUrl : null,
         featured: Boolean(p.featured),
         image,
         photos,

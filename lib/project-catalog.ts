@@ -84,6 +84,7 @@ export function mergeProjectsWithCatalog(records: ProjectRecord[]): ProjectEntry
       tags: record.tags ?? [],
       website: record.url ?? fromCatalog?.website ?? null,
       github: record.repoUrl ?? fromCatalog?.github ?? null,
+      avpVideoUrl: record.avpVideoUrl ?? fromCatalog?.avpVideoUrl ?? null,
       collaborators: Array.isArray(record.collaborators)
         ? record.collaborators.join(", ")
         : record.collaborators ?? fromCatalog?.collaborators ?? "Solo",

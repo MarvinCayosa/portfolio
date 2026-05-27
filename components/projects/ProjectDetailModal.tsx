@@ -6,7 +6,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Code2, ExternalLink, Users, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Code2, Globe, PlayCircle, Users, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { getPillColorForIndex } from "@/lib/skill-pill-colors";
 import type { ProjectEntry } from "@/types/project";
@@ -22,12 +22,16 @@ const AUTO_MS = 3500;
 
 function ImageCarousel({ images, title }: { images: string[]; title: string }) {
   const [idx, setIdx] = useState(0);
+  const [dir, setDir] = useState<1 | -1>(1);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const total = images.length;
 
   useEffect(() => {
     if (total <= 1) return;
-    timerRef.current = setInterval(() => setIdx((i) => (i + 1) % total), AUTO_MS);
+    timerRef.current = setInterval(() => {
+      setDir(1);
+      setIdx((i) => (i + 1) % total);
+    }, AUTO_MS);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
@@ -35,24 +39,36 @@ function ImageCarousel({ images, title }: { images: string[]; title: string }) {
 
   const go = (dir: 1 | -1) => {
     if (timerRef.current) clearInterval(timerRef.current);
+    setDir(dir);
     setIdx((i) => (i + dir + total) % total);
     if (total > 1) {
-      timerRef.current = setInterval(() => setIdx((i) => (i + 1) % total), AUTO_MS);
+      timerRef.current = setInterval(() => {
+        setDir(1);
+        setIdx((i) => (i + 1) % total);
+      }, AUTO_MS);
     }
   };
 
+  const slideVariants = {
+    enter: (dir: 1 | -1) => ({ x: dir > 0 ? 50 : -50, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (dir: 1 | -1) => ({ x: dir > 0 ? -50 : 50, opacity: 0 }),
+  } as const;
+
   return (
     <div className="relative w-full overflow-hidden rounded-t-2xl bg-[var(--surface)]" style={{ aspectRatio: "16/9" }}>
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence mode="wait" initial={false} custom={dir}>
         <motion.img
-          key={images[idx]}
+          key={`${images[idx]}-${idx}`}
           src={images[idx]}
           alt={`${title} screenshot ${idx + 1}`}
           className="absolute inset-0 h-full w-full object-cover"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2, ease: EASE }}
+          custom={dir}
+          variants={slideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.35, ease: EASE }}
         />
       </AnimatePresence>
 
@@ -185,7 +201,7 @@ export function ProjectDetailModal({ project, open, onOpenChange }: ProjectDetai
                           aria-label="Live site"
                           className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted)] hover:border-[var(--foreground)] hover:text-[var(--foreground)]"
                         >
-                          <ExternalLink className="h-4 w-4" />
+                          <Globe className="h-4 w-4" />
                         </a>
                       )}
                       {project.github && (
@@ -199,10 +215,21 @@ export function ProjectDetailModal({ project, open, onOpenChange }: ProjectDetai
                           <Code2 className="h-4 w-4" />
                         </a>
                       )}
+                      {project.avpVideoUrl && (
+                        <a
+                          href={project.avpVideoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="AVP video"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--muted)] hover:border-[var(--foreground)] hover:text-[var(--foreground)]"
+                        >
+                          <PlayCircle className="h-4 w-4" />
+                        </a>
+                      )}
                     </div>
                   </div>
 
-                  <p className="mt-3 font-body text-sm leading-relaxed text-[var(--muted)] sm:text-base">
+                  <p className="mt-3 font-body text-xs leading-relaxed text-[var(--muted)] sm:text-sm">
                     {project.description}
                   </p>
 

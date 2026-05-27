@@ -281,6 +281,7 @@ export function ProjectForm({ initial, onSave, onCancel, onUploadRequest, saving
   const [tags, setTags]                 = useState<string[]>(Array.isArray(initial?.tags) ? initial.tags as string[] : []);
   const [url, setUrl]                   = useState(String(initial?.url ?? ""));
   const [repoUrl, setRepoUrl]           = useState(String(initial?.repoUrl ?? ""));
+  const [avpVideoUrl, setAvpVideoUrl]   = useState(String(initial?.avpVideoUrl ?? ""));
   const [gallery, setGallery]           = useState<string[]>(() => projectImagesFromRecord(initial));
   const [collaborators, setCollaborators] = useState(String(initial?.collaborators ?? ""));
   const [featured, setFeatured]         = useState(Boolean(initial?.featured));
@@ -292,6 +293,7 @@ export function ProjectForm({ initial, onSave, onCancel, onUploadRequest, saving
       tags: tags.filter(Boolean),
       url: url || null,
       repoUrl: repoUrl || null,
+      avpVideoUrl: avpVideoUrl || null,
       image: gallery[0] ?? null,
       photos: gallery,
       collaborators: collaborators || null,
@@ -311,6 +313,7 @@ export function ProjectForm({ initial, onSave, onCancel, onUploadRequest, saving
       />
       <StudioInput label="Live URL" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com" type="url" />
       <StudioInput label="GitHub / Repo URL" value={repoUrl} onChange={(e) => setRepoUrl(e.target.value)} placeholder="https://github.com/user/repo" type="url" />
+      <StudioInput label="AVP Video URL" value={avpVideoUrl} onChange={(e) => setAvpVideoUrl(e.target.value)} placeholder="https://video.example.com" type="url" />
       <StudioInput label="Collaborators" value={collaborators} onChange={(e) => setCollaborators(e.target.value)} placeholder="Solo, or Team of 3" />
       <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, color: C.fg }}>
         <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} style={{ accentColor: C.fg, width: 15, height: 15 }} />

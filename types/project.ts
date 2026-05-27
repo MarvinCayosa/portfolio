@@ -13,6 +13,7 @@ export interface ProjectEntry {
   tags: string[];
   website?: string | null;
   github?: string | null;
+  avpVideoUrl?: string | null;
   collaborators?: string | null;
   featured?: boolean;
 }

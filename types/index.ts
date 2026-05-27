@@ -30,6 +30,7 @@ export interface ProjectRecord {
   tags?: string[];
   url?: string | null;
   repoUrl?: string | null;
+  avpVideoUrl?: string | null;
   featured?: boolean;
   image?: string | null;
   photos?: string[]; // image URLs
